@@ -1,0 +1,54 @@
+but keep the "/".
+	      var index = parsed.path.lastIndexOf('/');
+	      if (index >= 0) {
+	        parsed.path = parsed.path.substring(0, index + 1);
+	      }
+	    }
+	    sourceURL = join(urlGenerate(parsed), sourceURL);
+	  }
+	
+	  return normalize(sourceURL);
+	}
+	exports.computeSourceURL = computeSourceURL;
+
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+	/* -*- Mode: js; js-indent-level: 2; -*- */
+	/*
+	 * Copyright 2011 Mozilla Foundation and contributors
+	 * Licensed under the New BSD license. See LICENSE or:
+	 * http://opensource.org/licenses/BSD-3-Clause
+	 */
+	
+	var util = __webpack_require__(4);
+	var has = Object.prototype.hasOwnProperty;
+	var hasNativeMap = typeof Map !== "undefined";
+	
+	/**
+	 * A data structure which is a combination of an array and a set. Adding a new
+	 * member is O(1), testing for membership is O(1), and finding the index of an
+	 * element is O(1). Removing elements from the set is not supported. Only
+	 * strings are supported for membership.
+	 */
+	function ArraySet() {
+	  this._array = [];
+	  this._set = hasNativeMap ? new Map() : Object.create(null);
+	}
+	
+	/**
+	 * Static method for creating ArraySet instances from an existing array.
+	 */
+	ArraySet.fromArray = function ArraySet_fromArray(aArray, aAllowDuplicates) {
+	  var set = new ArraySet();
+	  for (var i = 0, len = aArray.length; i < len; i++) {
+	    set.add(aArray[i], aAllowDuplicates);
+	  }
+	  return set;
+	};
+	
+	/**
+	 * Return how many unique items are in this ArraySet. If duplicates have been
+	 * added, than 

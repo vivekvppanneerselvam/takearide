@@ -1,0 +1,17 @@
+	 *        to be applied. If relative, it is relative to the SourceMapConsumer.
+	 *        This parameter is needed when the two source maps aren't in the same
+	 *        directory, and the source map to be applied contains relative source
+	 *        paths. If so, those relative source paths need to be rewritten
+	 *        relative to the SourceMapGenerator.
+	 */
+	SourceMapGenerator.prototype.applySourceMap =
+	  function SourceMapGenerator_applySourceMap(aSourceMapConsumer, aSourceFile, aSourceMapPath) {
+	    var sourceFile = aSourceFile;
+	    // If aSourceFile is omitted, we will use the file property of the SourceMap
+	    if (aSourceFile == null) {
+	      if (aSourceMapConsumer.file == null) {
+	        throw new Error(
+	          'SourceMapGenerator.prototype.applySourceMap requires either an explicit source file, ' +
+	          'or the source map\'s "file" property. Both were omitted.'
+	        );
+	     

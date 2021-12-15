@@ -1,0 +1,97 @@
+rs.bold(name);
+					}
+					processModuleAttributes(module);
+					newline();
+					processModuleContent(module, contentPrefix);
+				}
+				if (obj.filteredModules > 0) {
+					colors.normal(prefix);
+					colors.normal("   ");
+					if (obj.modules.length > 0) colors.normal(" + ");
+					colors.normal(obj.filteredModules);
+					if (obj.modules.length > 0) colors.normal(" hidden");
+					colors.normal(obj.filteredModules !== 1 ? " modules" : " module");
+					newline();
+				}
+			}
+		};
+
+		if (obj.chunks) {
+			for (const chunk of obj.chunks) {
+				colors.normal("chunk ");
+				if (chunk.id < 1000) colors.normal(" ");
+				if (chunk.id < 100) colors.normal(" ");
+				if (chunk.id < 10) colors.normal(" ");
+				colors.normal("{");
+				colors.yellow(chunk.id);
+				colors.normal("} ");
+				colors.green(chunk.files.join(", "));
+				if (chunk.names && chunk.names.length > 0) {
+					colors.normal(" (");
+					colors.normal(chunk.names.join(", "));
+					colors.normal(")");
+				}
+				colors.normal(" ");
+				colors.normal(SizeFormatHelpers.formatSize(chunk.size));
+				for (const id of chunk.parents) {
+					colors.normal(" <{");
+					colors.yellow(id);
+					colors.normal("}>");
+				}
+				for (const id of chunk.siblings) {
+					colors.normal(" ={");
+					colors.yellow(id);
+					colors.normal("}=");
+				}
+				for (const id of chunk.children) {
+					colors.normal(" >{");
+					colors.yellow(id);
+					colors.normal("}<");
+				}
+				if (chunk.childrenByOrder) {
+					for (const name of Object.keys(chunk.childrenByOrder)) {
+						const children = chunk.childrenByOrder[name];
+						colors.normal(" ");
+						colors.magenta(`(${name}:`);
+						for (const id of children) {
+							colors.normal(" {");
+							colors.yellow(id);
+							colors.normal("}");
+						}
+						colors.magenta(")");
+					}
+				}
+				if (chunk.entry) {
+					colors.yellow(" [entry]");
+				} else if (chunk.initial) {
+					colors.yellow(" [initial]");
+				}
+				if (chunk.rendered) {
+					colors.green(" [rendered]");
+				}
+				if (chunk.recorded) {
+					colors.green(" [recorded]");
+				}
+				if (chunk.reason) {
+					colors.yellow(` ${chunk.reason}`);
+				}
+				newline();
+				if (chunk.origins) {
+					for (const origin of chunk.origins) {
+						colors.normal("    > ");
+						if (origin.reasons && origin.reasons.length) {
+							colors.yellow(origin.reasons.join(" "));
+							colors.normal(" ");
+						}
+						if (origin.request) {
+							colors.normal(origin.request);
+							colors.normal(" ");
+						}
+						if (origin.module) {
+							colors.normal("[");
+							colors.normal(origin.moduleId);
+							colors.normal("] ");
+							const module = modulesByIdentifier[`$${origin.module}`];
+							if (module) {
+								colors.bold(module.name);
+				

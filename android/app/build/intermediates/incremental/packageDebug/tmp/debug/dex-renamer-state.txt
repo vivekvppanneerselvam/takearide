@@ -1,0 +1,4 @@
+#Sat Sep 11 05:36:04 PDT 2021
+base.0=D\:\\WS\\reactws\\takearide\\android\\app\\build\\intermediates\\transforms\\dexMerger\\debug\\0
+path.0=classes.dex
+renamed.0=classes.dex

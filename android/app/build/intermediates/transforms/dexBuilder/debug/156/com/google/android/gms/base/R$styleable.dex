@@ -1,0 +1,55 @@
+  /**
+     * @return {?}
+     */
+    finish() { this._command('finish'); }
+    /**
+     * @return {?}
+     */
+    destroy() { this._command('destroy'); }
+    /**
+     * @return {?}
+     */
+    reset() { this._command('reset'); }
+    /**
+     * @param {?} p
+     * @return {?}
+     */
+    setPosition(p) { this._command('setPosition', p); }
+    /**
+     * @return {?}
+     */
+    getPosition() { return 0; }
+}
+/**
+ * @param {?} renderer
+ * @param {?} element
+ * @param {?} id
+ * @param {?} command
+ * @param {?} args
+ * @return {?}
+ */
+function issueAnimationCommand(renderer, element, id, command, args) {
+    return renderer.setProperty(element, `@@${id}:${command}`, args);
+}
+
+/**
+ * @fileoverview added by tsickle
+ * @suppress {checkTypes,extraRequire,uselessCode} checked by tsc
+ */
+/** @type {?} */
+const ANIMATION_PREFIX = '@';
+/** @type {?} */
+const DISABLE_ANIMATIONS_FLAG = '@.disabled';
+class AnimationRendererFactory {
+    /**
+     * @param {?} delegate
+     * @param {?} engine
+     * @param {?} _zone
+     */
+    constructor(delegate, engine, _zone) {
+        this.delegate = delegate;
+        this.engine = engine;
+        this._zone = _zone;
+        this._currentId = 0;
+        this._microtaskId = 1;
+        this._a

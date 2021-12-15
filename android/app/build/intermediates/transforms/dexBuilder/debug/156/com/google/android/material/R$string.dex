@@ -1,0 +1,151 @@
+t & 255, exponent /= 256, exponentLength -= 8);
+	  buffer[--index] |= sign * 128;
+	  return buffer;
+	};
+
+	var unpack = function (buffer, mantissaLength) {
+	  var bytes = buffer.length;
+	  var exponentLength = bytes * 8 - mantissaLength - 1;
+	  var eMax = (1 << exponentLength) - 1;
+	  var eBias = eMax >> 1;
+	  var nBits = exponentLength - 7;
+	  var index = bytes - 1;
+	  var sign = buffer[index--];
+	  var exponent = sign & 127;
+	  var mantissa;
+	  sign >>= 7;
+	  for (; nBits > 0; exponent = exponent * 256 + buffer[index], index--, nBits -= 8);
+	  mantissa = exponent & (1 << -nBits) - 1;
+	  exponent >>= -nBits;
+	  nBits += mantissaLength;
+	  for (; nBits > 0; mantissa = mantissa * 256 + buffer[index], index--, nBits -= 8);
+	  if (exponent === 0) {
+	    exponent = 1 - eBias;
+	  } else if (exponent === eMax) {
+	    return mantissa ? NaN : sign ? -Infinity$1 : Infinity$1;
+	  } else {
+	    mantissa = mantissa + pow(2, mantissaLength);
+	    exponent = exponent - eBias;
+	  } return (sign ? -1 : 1) * mantissa * pow(2, exponent - mantissaLength);
+	};
+
+	var ieee754 = {
+	  pack: pack,
+	  unpack: unpack
+	};
+
+	var getOwnPropertyNames$2 = objectGetOwnPropertyNames.f;
+	var defineProperty$8 = objectDefineProperty.f;
+
+
+
+
+	var getInternalState$2 = internalState.get;
+	var setInternalState$3 = internalState.set;
+	var ARRAY_BUFFER = 'ArrayBuffer';
+	var DATA_VIEW = 'DataView';
+	var PROTOTYPE$2 = 'prototype';
+	var WRONG_LENGTH = 'Wrong length';
+	var WRONG_INDEX = 'Wrong index';
+	var NativeArrayBuffer = global_1[ARRAY_BUFFER];
+	var $ArrayBuffer = NativeArrayBuffer;
+	var $DataView = global_1[DATA_VIEW];
+	var $DataViewPrototype = $DataView && $DataView[PROTOTYPE$2];
+	var ObjectPrototype$2 = Object.prototype;
+	var RangeError$1 = global_1.RangeError;
+
+	var packIEEE754 = ieee754.pack;
+	var unpackIEEE754 = ieee754.unpack;
+
+	var packInt8 = function (number) {
+	  return [number & 0xFF];
+	};
+
+	var packInt16 = function (number) {
+	  return [number & 0xFF, number >> 8 & 0xFF];
+	};
+
+	var packInt32 = function (number) {
+	  return [number & 0xFF, number >> 8 & 0xFF, number >> 16 & 0xFF, number >> 24 & 0xFF];
+	};
+
+	var unpackInt32 = function (buffer) {
+	  return buffer[3] << 24 | buffer[2] << 16 | buffer[1] << 8 | buffer[0];
+	};
+
+	var packFloat32 = function (number) {
+	  return packIEEE754(number, 23, 4);
+	};
+
+	var packFloat64 = function (number) {
+	  return packIEEE754(number, 52, 8);
+	};
+
+	var addGetter = function (Constructor, key) {
+	  defineProperty$8(Constructor[PROTOTYPE$2], key, { get: function () { return getInternalState$2(this)[key]; } });
+	};
+
+	var get$1 = function (view, count, index, isLittleEndian) {
+	  var intIndex = toIndex(index);
+	  var store = getInternalState$2(view);
+	  if (intIndex + count > store.byteLength) throw RangeError$1(WRONG_INDEX);
+	  var bytes = getInternalState$2(store.buffer).bytes;
+	  var start = intIndex + store.byteOffset;
+	  var pack = bytes.slice(start, start + count);
+	  return isLittleEndian ? pack : pack.reverse();
+	};
+
+	var set$1 = function (view, count, index, conversion, value, isLittleEndian) {
+	  var intIndex = toIndex(index);
+	  var store = getInternalState$2(view);
+	  if (intIndex + count > store.byteLength) throw RangeError$1(WRONG_INDEX);
+	  var bytes = getInternalState$2(store.buffer).bytes;
+	  var start = intIndex + store.byteOffset;
+	  var pack = conversion(+value);
+	  for (var i = 0; i < count; i++) bytes[start + i] = pack[isLittleEndian ? i : count - i - 1];
+	};
+
+	if (!arrayBufferNative) {
+	  $ArrayBuffer = function ArrayBuffer(length) {
+	    anInstance(this, $ArrayBuffer, ARRAY_BUFFER);
+	    var byteLength = toIndex(length);
+	    setInternalState$3(this, {
+	      bytes: arrayFill.call(new Array(byteLength), 0),
+	      byteLength: byteLength
+	    });
+	    if (!descriptors) this.byteLength = byteLength;
+	  };
+
+	  $DataView = function DataView(buffer, byteOffset, byteLength) {
+	    anInstance(this, $DataView, DATA_VIEW);
+	    anInstance(buffer, $ArrayBuffer, DATA_VIEW);
+	    var bufferLength = getInternalState$2(buffer).byteLength;
+	    var offset = toInteger(byteOffset);
+	    if (offset < 0 || offset > bufferLength) throw RangeError$1('Wrong offset');
+	    byteLength = byteLength === undefined ? bufferLength - offset : toLength(byteLength);
+	    if (offset + byteLength > bufferLength) throw RangeError$1(WRONG_LENGTH);
+	    setInternalState$3(this, {
+	      buffer: buffer,
+	      byteLength: byteLength,
+	      byteOffset: offset
+	    });
+	    if (!descriptors) {
+	      this.buffer = buffer;
+	      this.byteLength = byteLength;
+	      this.byteOffset = offset;
+	    }
+	  };
+
+	  if (descriptors) {
+	    addGetter($ArrayBuffer, 'byteLength');
+	    addGetter($DataView, 'buffer');
+	    addGetter($DataView, 'byteLength');
+	    addGetter($DataView, 'byteOffset');
+	  }
+
+	  redefineAll($DataView[PROTOTYPE$2], {
+	    getInt8: function getInt8(byteOffset) {
+	      return get$1(this, 1, byteOffset)[0] << 24 >> 24;
+	    },
+	    getUint8: function getUint8(byteOffset) {
+	      return 

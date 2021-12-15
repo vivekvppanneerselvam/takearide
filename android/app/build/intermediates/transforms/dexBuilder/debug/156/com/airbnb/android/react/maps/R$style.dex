@@ -1,0 +1,941 @@
+e,
+	  notify: notify$2
+	};
+
+	var diff$1 = true;
+	var extension = [
+		"js",
+		"cjs",
+		"mjs"
+	];
+	var reporter = "spec";
+	var slow = 75;
+	var timeout = 2000;
+	var ui = "bdd";
+	var mocharc = {
+		diff: diff$1,
+		extension: extension,
+		"package": "./package.json",
+		reporter: reporter,
+		slow: slow,
+		timeout: timeout,
+		ui: ui,
+		"watch-ignore": [
+		"node_modules",
+		".git"
+	]
+	};
+
+	var mocharc$1 = /*#__PURE__*/Object.freeze({
+		__proto__: null,
+		diff: diff$1,
+		extension: extension,
+		reporter: reporter,
+		slow: slow,
+		timeout: timeout,
+		ui: ui,
+		'default': mocharc
+	});
+
+	/**
+	 * Provides a factory function for a {@link StatsCollector} object.
+	 * @module
+	 */
+
+
+	var constants$3 = runner$1.constants;
+	var EVENT_TEST_PASS = constants$3.EVENT_TEST_PASS;
+	var EVENT_TEST_FAIL = constants$3.EVENT_TEST_FAIL;
+	var EVENT_SUITE_BEGIN = constants$3.EVENT_SUITE_BEGIN;
+	var EVENT_RUN_BEGIN = constants$3.EVENT_RUN_BEGIN;
+	var EVENT_TEST_PENDING = constants$3.EVENT_TEST_PENDING;
+	var EVENT_RUN_END$1 = constants$3.EVENT_RUN_END;
+	var EVENT_TEST_END = constants$3.EVENT_TEST_END;
+	/**
+	 * Test statistics collector.
+	 *
+	 * @public
+	 * @typedef {Object} StatsCollector
+	 * @property {number} suites - integer count of suites run.
+	 * @property {number} tests - integer count of tests run.
+	 * @property {number} passes - integer count of passing tests.
+	 * @property {number} pending - integer count of pending tests.
+	 * @property {number} failures - integer count of failed tests.
+	 * @property {Date} start - time when testing began.
+	 * @property {Date} end - time when testing concluded.
+	 * @property {number} duration - number of msecs that testing took.
+	 */
+
+	var Date$3 = commonjsGlobal.Date;
+	/**
+	 * Provides stats such as test duration, number of tests passed / failed etc., by listening for events emitted by `runner`.
+	 *
+	 * @private
+	 * @param {Runner} runner - Runner instance
+	 * @throws {TypeError} If falsy `runner`
+	 */
+
+	function createStatsCollector(runner) {
+	  /**
+	   * @type StatsCollector
+	   */
+	  var stats = {
+	    suites: 0,
+	    tests: 0,
+	    passes: 0,
+	    pending: 0,
+	    failures: 0
+	  };
+
+	  if (!runner) {
+	    throw new TypeError('Missing runner argument');
+	  }
+
+	  runner.stats = stats;
+	  runner.once(EVENT_RUN_BEGIN, function () {
+	    stats.start = new Date$3();
+	  });
+	  runner.on(EVENT_SUITE_BEGIN, function (suite) {
+	    suite.root || stats.suites++;
+	  });
+	  runner.on(EVENT_TEST_PASS, function () {
+	    stats.passes++;
+	  });
+	  runner.on(EVENT_TEST_FAIL, function () {
+	    stats.failures++;
+	  });
+	  runner.on(EVENT_TEST_PENDING, function () {
+	    stats.pending++;
+	  });
+	  runner.on(EVENT_TEST_END, function () {
+	    stats.tests++;
+	  });
+	  runner.once(EVENT_RUN_END$1, function () {
+	    stats.end = new Date$3();
+	    stats.duration = stats.end - stats.start;
+	  });
+	}
+
+	var statsCollector = createStatsCollector;
+
+	var createInvalidArgumentTypeError$1 = errors.createInvalidArgumentTypeError;
+	var isString$1 = utils.isString;
+	var test$1 = Test;
+	/**
+	 * Initialize a new `Test` with the given `title` and callback `fn`.
+	 *
+	 * @public
+	 * @class
+	 * @extends Runnable
+	 * @param {String} title - Test title (required)
+	 * @param {Function} [fn] - Test callback.  If omitted, the Test is considered "pending"
+	 */
+
+	function Test(title, fn) {
+	  if (!isString$1(title)) {
+	    throw createInvalidArgumentTypeError$1('Test argument "title" should be a string. Received type "' + _typeof(title) + '"', 'title', 'string');
+	  }
+
+	  this.type = 'test';
+	  runnable.call(this, title, fn);
+	  this.reset();
+	}
+	/**
+	 * Inherit from `Runnable.prototype`.
+	 */
+
+
+	utils.inherits(Test, runnable);
+	/**
+	 * Resets the state initially or for a next run.
+	 */
+
+	Test.prototype.reset = function () {
+	  runnable.prototype.reset.call(this);
+	  this.pending = !this.fn;
+	  delete this.state;
+	};
+	/**
+	 * Set or get retried test
+	 *
+	 * @private
+	 */
+
+
+	Test.prototype.retriedTest = function (n) {
+	  if (!arguments.length) {
+	    return this._retriedTest;
+	  }
+
+	  this._retriedTest = n;
+	};
+	/**
+	 * Add test to the list of tests marked `only`.
+	 *
+	 * @private
+	 */
+
+
+	Test.prototype.markOnly = function () {
+	  this.parent.appendOnlyTest(this);
+	};
+
+	Test.prototype.clone = function () {
+	  var test = new Test(this.title, this.fn);
+	  test.timeout(this.timeout());
+	  test.slow(this.slow());
+	  test.retries(this.retries());
+	  test.currentRetry(this.currentRetry());
+	  test.retriedTest(this.retriedTest() || this);
+	  test.globals(this.globals());
+	  test.parent = this.parent;
+	  test.file = this.file;
+	  test.ctx = this.ctx;
+	  return test;
+	};
+	/**
+	 * Returns an minimal object suitable for transmission over IPC.
+	 * Functions are represented by keys beginning with `$$`.
+	 * @private
+	 * @returns {Object}
+	 */
+
+
+	Test.prototype.serialize = function serialize() {
+	  return {
+	    $$currentRetry: this._currentRetry,
+	    $$fullTitle: this.fullTitle(),
+	    $$isPending: this.pending,
+	    $$retriedTest: this._retriedTest || null,
+	    $$slow: this._slow,
+	    $$titlePath: this.titlePath(),
+	    body: this.body,
+	    duration: this.duration,
+	    err: this.err,
+	    parent: {
+	      $$fullTitle: this.parent.fullTitle()
+	    },
+	    speed: this.speed,
+	    state: this.state,
+	    title: this.title,
+	    type: this.type,
+	    file: this.file
+	  };
+	};
+
+	/**
+	 @module interfaces/common
+	*/
+
+
+	var createMissingArgumentError$1 = errors.createMissingArgumentError;
+	var createUnsupportedError$2 = errors.createUnsupportedError;
+	var createForbiddenExclusivityError$1 = errors.createForbiddenExclusivityError;
+	/**
+	 * Functions common to more than one interface.
+	 *
+	 * @private
+	 * @param {Suite[]} suites
+	 * @param {Context} context
+	 * @param {Mocha} mocha
+	 * @return {Object} An object containing common functions.
+	 */
+
+	var common$1 = function common(suites, context, mocha) {
+	  /**
+	   * Check if the suite should be tested.
+	   *
+	   * @private
+	   * @param {Suite} suite - suite to check
+	   * @returns {boolean}
+	   */
+	  function shouldBeTested(suite) {
+	    return !mocha.options.grep || mocha.options.grep && mocha.options.grep.test(suite.fullTitle()) && !mocha.options.invert;
+	  }
+
+	  return {
+	    /**
+	     * This is only present if flag --delay is passed into Mocha. It triggers
+	     * root suite execution.
+	     *
+	     * @param {Suite} suite The root suite.
+	     * @return {Function} A function which runs the root suite
+	     */
+	    runWithSuite: function runWithSuite(suite) {
+	      return function run() {
+	        suite.run();
+	      };
+	    },
+
+	    /**
+	     * Execute before running tests.
+	     *
+	     * @param {string} name
+	     * @param {Function} fn
+	     */
+	    before: function before(name, fn) {
+	      suites[0].beforeAll(name, fn);
+	    },
+
+	    /**
+	     * Execute after running tests.
+	     *
+	     * @param {string} name
+	     * @param {Function} fn
+	     */
+	    after: function after(name, fn) {
+	      suites[0].afterAll(name, fn);
+	    },
+
+	    /**
+	     * Execute before each test case.
+	     *
+	     * @param {string} name
+	     * @param {Function} fn
+	     */
+	    beforeEach: function beforeEach(name, fn) {
+	      suites[0].beforeEach(name, fn);
+	    },
+
+	    /**
+	     * Execute after each test case.
+	     *
+	     * @param {string} name
+	     * @param {Function} fn
+	     */
+	    afterEach: function afterEach(name, fn) {
+	      suites[0].afterEach(name, fn);
+	    },
+	    suite: {
+	      /**
+	       * Create an exclusive Suite; convenience function
+	       * See docstring for create() below.
+	       *
+	       * @param {Object} opts
+	       * @returns {Suite}
+	       */
+	      only: function only(opts) {
+	        if (mocha.options.forbidOnly) {
+	          throw createForbiddenExclusivityError$1(mocha);
+	        }
+
+	        opts.isOnly = true;
+	        return this.create(opts);
+	      },
+
+	      /**
+	       * Create a Suite, but skip it; convenience function
+	       * See docstring for create() below.
+	       *
+	       * @param {Object} opts
+	       * @returns {Suite}
+	       */
+	      skip: function skip(opts) {
+	        opts.pending = true;
+	        return this.create(opts);
+	      },
+
+	      /**
+	       * Creates a suite.
+	       *
+	       * @param {Object} opts Options
+	       * @param {string} opts.title Title of Suite
+	       * @param {Function} [opts.fn] Suite Function (not always applicable)
+	       * @param {boolean} [opts.pending] Is Suite pending?
+	       * @param {string} [opts.file] Filepath where this Suite resides
+	       * @param {boolean} [opts.isOnly] Is Suite exclusive?
+	       * @returns {Suite}
+	       */
+	      create: function create(opts) {
+	        var suite$1 = suite.create(suites[0], opts.title);
+	        suite$1.pending = Boolean(opts.pending);
+	        suite$1.file = opts.file;
+	        suites.unshift(suite$1);
+
+	        if (opts.isOnly) {
+	          suite$1.markOnly();
+	        }
+
+	        if (suite$1.pending && mocha.options.forbidPending && shouldBeTested(suite$1)) {
+	          throw createUnsupportedError$2('Pending test forbidden');
+	        }
+
+	        if (typeof opts.fn === 'function') {
+	          opts.fn.call(suite$1);
+	          suites.shift();
+	        } else if (typeof opts.fn === 'undefined' && !suite$1.pending) {
+	          throw createMissingArgumentError$1('Suite "' + suite$1.fullTitle() + '" was defined but no callback was supplied. ' + 'Supply a callback or explicitly skip the suite.', 'callback', 'function');
+	        } else if (!opts.fn && suite$1.pending) {
+	          suites.shift();
+	        }
+
+	        return suite$1;
+	      }
+	    },
+	    test: {
+	      /**
+	       * Exclusive test-case.
+	       *
+	       * @param {Object} mocha
+	       * @param {Function} test
+	       * @returns {*}
+	       */
+	      only: function only(mocha, test) {
+	        if (mocha.options.forbidOnly) {
+	          throw createForbiddenExclusivityError$1(mocha);
+	        }
+
+	        test.markOnly();
+	        return test;
+	      },
+
+	      /**
+	       * Pending test case.
+	       *
+	       * @param {string} title
+	       */
+	      skip: function skip(title) {
+	        context.test(title);
+	      },
+
+	      /**
+	       * Number of retry attempts
+	       *
+	       * @param {number} n
+	       */
+	      retries: function retries(n) {
+	        context.retries(n);
+	      }
+	    }
+	  };
+	};
+
+	var EVENT_FILE_PRE_REQUIRE = suite.constants.EVENT_FILE_PRE_REQUIRE;
+	/**
+	 * BDD-style interface:
+	 *
+	 *      describe('Array', function() {
+	 *        describe('#indexOf()', function() {
+	 *          it('should return -1 when not present', function() {
+	 *            // ...
+	 *          });
+	 *
+	 *          it('should return the index when present', function() {
+	 *            // ...
+	 *          });
+	 *        });
+	 *      });
+	 *
+	 * @param {Suite} suite Root suite.
+	 */
+
+	var bdd = function bddInterface(suite) {
+	  var suites = [suite];
+	  suite.on(EVENT_FILE_PRE_REQUIRE, function (context, file, mocha) {
+	    var common = common$1(suites, context, mocha);
+	    context.before = common.before;
+	    context.after = common.after;
+	    context.beforeEach = common.beforeEach;
+	    context.afterEach = common.afterEach;
+	    context.run = mocha.options.delay && common.runWithSuite(suite);
+	    /**
+	     * Describe a "suite" with the given `title`
+	     * and callback `fn` containing nested suites
+	     * and/or tests.
+	     */
+
+	    context.describe = context.context = function (title, fn) {
+	      return common.suite.create({
+	        title: title,
+	        file: file,
+	        fn: fn
+	      });
+	    };
+	    /**
+	     * Pending describe.
+	     */
+
+
+	    context.xdescribe = context.xcontext = context.describe.skip = function (title, fn) {
+	      return common.suite.skip({
+	        title: title,
+	        file: file,
+	        fn: fn
+	      });
+	    };
+	    /**
+	     * Exclusive suite.
+	     */
+
+
+	    context.describe.only = function (title, fn) {
+	      return common.suite.only({
+	        title: title,
+	        file: file,
+	        fn: fn
+	      });
+	    };
+	    /**
+	     * Describe a specification or test-case
+	     * with the given `title` and callback `fn`
+	     * acting as a thunk.
+	     */
+
+
+	    context.it = context.specify = function (title, fn) {
+	      var suite = suites[0];
+
+	      if (suite.isPending()) {
+	        fn = null;
+	      }
+
+	      var test = new test$1(title, fn);
+	      test.file = file;
+	      suite.addTest(test);
+	      return test;
+	    };
+	    /**
+	     * Exclusive test-case.
+	     */
+
+
+	    context.it.only = function (title, fn) {
+	      return common.test.only(mocha, context.it(title, fn));
+	    };
+	    /**
+	     * Pending test case.
+	     */
+
+
+	    context.xit = context.xspecify = context.it.skip = function (title) {
+	      return context.it(title);
+	    };
+	    /**
+	     * Number of attempts to retry.
+	     */
+
+
+	    context.it.retries = function (n) {
+	      context.retries(n);
+	    };
+	  });
+	};
+
+	var description = 'BDD or RSpec style [default]';
+	bdd.description = description;
+
+	var EVENT_FILE_PRE_REQUIRE$1 = suite.constants.EVENT_FILE_PRE_REQUIRE;
+	/**
+	 * TDD-style interface:
+	 *
+	 *      suite('Array', function() {
+	 *        suite('#indexOf()', function() {
+	 *          suiteSetup(function() {
+	 *
+	 *          });
+	 *
+	 *          test('should return -1 when not present', function() {
+	 *
+	 *          });
+	 *
+	 *          test('should return the index when present', function() {
+	 *
+	 *          });
+	 *
+	 *          suiteTeardown(function() {
+	 *
+	 *          });
+	 *        });
+	 *      });
+	 *
+	 * @param {Suite} suite Root suite.
+	 */
+
+	var tdd = function tdd(suite) {
+	  var suites = [suite];
+	  suite.on(EVENT_FILE_PRE_REQUIRE$1, function (context, file, mocha) {
+	    var common = common$1(suites, context, mocha);
+	    context.setup = common.beforeEach;
+	    context.teardown = common.afterEach;
+	    context.suiteSetup = common.before;
+	    context.suiteTeardown = common.after;
+	    context.run = mocha.options.delay && common.runWithSuite(suite);
+	    /**
+	     * Describe a "suite" with the given `title` and callback `fn` containing
+	     * nested suites and/or tests.
+	     */
+
+	    context.suite = function (title, fn) {
+	      return common.suite.create({
+	        title: title,
+	        file: file,
+	        fn: fn
+	      });
+	    };
+	    /**
+	     * Pending suite.
+	     */
+
+
+	    context.suite.skip = function (title, fn) {
+	      return common.suite.skip({
+	        title: title,
+	        file: file,
+	        fn: fn
+	      });
+	    };
+	    /**
+	     * Exclusive test-case.
+	     */
+
+
+	    context.suite.only = function (title, fn) {
+	      return common.suite.only({
+	        title: title,
+	        file: file,
+	        fn: fn
+	      });
+	    };
+	    /**
+	     * Describe a specification or test-case with the given `title` and
+	     * callback `fn` acting as a thunk.
+	     */
+
+
+	    context.test = function (title, fn) {
+	      var suite = suites[0];
+
+	      if (suite.isPending()) {
+	        fn = null;
+	      }
+
+	      var test = new test$1(title, fn);
+	      test.file = file;
+	      suite.addTest(test);
+	      return test;
+	    };
+	    /**
+	     * Exclusive test-case.
+	     */
+
+
+	    context.test.only = function (title, fn) {
+	      return common.test.only(mocha, context.test(title, fn));
+	    };
+
+	    context.test.skip = common.test.skip;
+	    context.test.retries = common.test.retries;
+	  });
+	};
+
+	var description$1 = 'traditional "suite"/"test" instead of BDD\'s "describe"/"it"';
+	tdd.description = description$1;
+
+	var EVENT_FILE_PRE_REQUIRE$2 = suite.constants.EVENT_FILE_PRE_REQUIRE;
+	/**
+	 * QUnit-style interface:
+	 *
+	 *     suite('Array');
+	 *
+	 *     test('#length', function() {
+	 *       var arr = [1,2,3];
+	 *       ok(arr.length == 3);
+	 *     });
+	 *
+	 *     test('#indexOf()', function() {
+	 *       var arr = [1,2,3];
+	 *       ok(arr.indexOf(1) == 0);
+	 *       ok(arr.indexOf(2) == 1);
+	 *       ok(arr.indexOf(3) == 2);
+	 *     });
+	 *
+	 *     suite('String');
+	 *
+	 *     test('#length', function() {
+	 *       ok('foo'.length == 3);
+	 *     });
+	 *
+	 * @param {Suite} suite Root suite.
+	 */
+
+	var qunit = function qUnitInterface(suite) {
+	  var suites = [suite];
+	  suite.on(EVENT_FILE_PRE_REQUIRE$2, function (context, file, mocha) {
+	    var common = common$1(suites, context, mocha);
+	    context.before = common.before;
+	    context.after = common.after;
+	    context.beforeEach = common.beforeEach;
+	    context.afterEach = common.afterEach;
+	    context.run = mocha.options.delay && common.runWithSuite(suite);
+	    /**
+	     * Describe a "suite" with the given `title`.
+	     */
+
+	    context.suite = function (title) {
+	      if (suites.length > 1) {
+	        suites.shift();
+	      }
+
+	      return common.suite.create({
+	        title: title,
+	        file: file,
+	        fn: false
+	      });
+	    };
+	    /**
+	     * Exclusive Suite.
+	     */
+
+
+	    context.suite.only = function (title) {
+	      if (suites.length > 1) {
+	        suites.shift();
+	      }
+
+	      return common.suite.only({
+	        title: title,
+	        file: file,
+	        fn: false
+	      });
+	    };
+	    /**
+	     * Describe a specification or test-case
+	     * with the given `title` and callback `fn`
+	     * acting as a thunk.
+	     */
+
+
+	    context.test = function (title, fn) {
+	      var test = new test$1(title, fn);
+	      test.file = file;
+	      suites[0].addTest(test);
+	      return test;
+	    };
+	    /**
+	     * Exclusive test-case.
+	     */
+
+
+	    context.test.only = function (title, fn) {
+	      return common.test.only(mocha, context.test(title, fn));
+	    };
+
+	    context.test.skip = common.test.skip;
+	    context.test.retries = common.test.retries;
+	  });
+	};
+
+	var description$2 = 'QUnit style';
+	qunit.description = description$2;
+
+	/**
+	 * Exports-style (as Node.js module) interface:
+	 *
+	 *     exports.Array = {
+	 *       '#indexOf()': {
+	 *         'should return -1 when the value is not present': function() {
+	 *
+	 *         },
+	 *
+	 *         'should return the correct index when the value is present': function() {
+	 *
+	 *         }
+	 *       }
+	 *     };
+	 *
+	 * @param {Suite} suite Root suite.
+	 */
+
+
+	var exports$1 = function exports(suite$1) {
+	  var suites = [suite$1];
+	  suite$1.on(suite.constants.EVENT_FILE_REQUIRE, visit);
+
+	  function visit(obj, file) {
+	    var suite$1;
+
+	    for (var key in obj) {
+	      if (typeof obj[key] === 'function') {
+	        var fn = obj[key];
+
+	        switch (key) {
+	          case 'before':
+	            suites[0].beforeAll(fn);
+	            break;
+
+	          case 'after':
+	            suites[0].afterAll(fn);
+	            break;
+
+	          case 'beforeEach':
+	            suites[0].beforeEach(fn);
+	            break;
+
+	          case 'afterEach':
+	            suites[0].afterEach(fn);
+	            break;
+
+	          default:
+	            var test = new test$1(key, fn);
+	            test.file = file;
+	            suites[0].addTest(test);
+	        }
+	      } else {
+	        suite$1 = suite.create(suites[0], key);
+	        suites.unshift(suite$1);
+	        visit(obj[key], file);
+	        suites.shift();
+	      }
+	    }
+	  }
+	};
+
+	var description$3 = 'Node.js module ("exports") style';
+	exports$1.description = description$3;
+
+	var bdd$1 = bdd;
+	var tdd$1 = tdd;
+	var qunit$1 = qunit;
+	var exports$2 = exports$1;
+	var interfaces = {
+	  bdd: bdd$1,
+	  tdd: tdd$1,
+	  qunit: qunit$1,
+	  exports: exports$2
+	};
+
+	/**
+	 * @module Context
+	 */
+
+	/**
+	 * Expose `Context`.
+	 */
+
+	var context = Context;
+	/**
+	 * Initialize a new `Context`.
+	 *
+	 * @private
+	 */
+
+	function Context() {}
+	/**
+	 * Set or get the context `Runnable` to `runnable`.
+	 *
+	 * @private
+	 * @param {Runnable} runnable
+	 * @return {Context} context
+	 */
+
+
+	Context.prototype.runnable = function (runnable) {
+	  if (!arguments.length) {
+	    return this._runnable;
+	  }
+
+	  this.test = this._runnable = runnable;
+	  return this;
+	};
+	/**
+	 * Set or get test timeout `ms`.
+	 *
+	 * @private
+	 * @param {number} ms
+	 * @return {Context} self
+	 */
+
+
+	Context.prototype.timeout = function (ms) {
+	  if (!arguments.length) {
+	    return this.runnable().timeout();
+	  }
+
+	  this.runnable().timeout(ms);
+	  return this;
+	};
+	/**
+	 * Set or get test slowness threshold `ms`.
+	 *
+	 * @private
+	 * @param {number} ms
+	 * @return {Context} self
+	 */
+
+
+	Context.prototype.slow = function (ms) {
+	  if (!arguments.length) {
+	    return this.runnable().slow();
+	  }
+
+	  this.runnable().slow(ms);
+	  return this;
+	};
+	/**
+	 * Mark a test as skipped.
+	 *
+	 * @private
+	 * @throws Pending
+	 */
+
+
+	Context.prototype.skip = function () {
+	  this.runnable().skip();
+	};
+	/**
+	 * Set or get a number of allowed retries on failed tests
+	 *
+	 * @private
+	 * @param {number} n
+	 * @return {Context} self
+	 */
+
+
+	Context.prototype.retries = function (n) {
+	  if (!arguments.length) {
+	    return this.runnable().retries();
+	  }
+
+	  this.runnable().retries(n);
+	  return this;
+	};
+
+	var mocharc$2 = getCjsExportFromNamespace(mocharc$1);
+
+	var mocha = createCommonjsModule(function (module, exports) {
+	  /*!
+	   * mocha
+	   * Copyright(c) 2011 TJ Holowaychuk <tj@vision-media.ca>
+	   * MIT Licensed
+	   */
+
+	  var esmUtils = utils.supportsEsModules(true) ? require$$11 : undefined;
+	  var createUnsupportedError = errors.createUnsupportedError,
+	      createInvalidInterfaceError = errors.createInvalidInterfaceError,
+	      createInvalidReporterError = errors.createInvalidReporterError,
+	      createMochaInstanceAlreadyDisposedError = errors.createMochaInstanceAlreadyDisposedError,
+	      createMochaInstanceAlreadyRunningError = errors.createMochaInstanceAlreadyRunningError;
+	  var EVENT_FILE_PRE_REQUIRE = suite.constants.EVENT_FILE_PRE_REQUIRE;
+	  var EVENT_FILE_POST_REQUIRE = suite.constants.EVENT_FILE_POST_REQUIRE;
+	  var EVENT_FILE_REQUIRE = suite.constants.EVENT_FILE_REQUIRE;
+	  var sQuote = utils.sQuote;
+	  var debug = browser$2('mocha:mocha');
+	  exports = module.exports = Mocha;
+	  /**
+	   * A Mocha instance is a finite state machine.
+	   * These are the states it can be in.
+	   * @private
+	   */
+
+	  var mochaStates = utils.defineConstants({
+	    /**
+	     * Initial state of the mocha instance
+	     * @private
+	     */
+	    INIT: 'init',
+
+	    /**
+	     * Mocha instance is running tests
+	     * @private
+	     */
+	    RUNNIN

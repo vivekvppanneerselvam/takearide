@@ -1,0 +1,73 @@
+tions = Stats.presetToOptions(options);
+		} else if (!options) {
+			options = {};
+		}
+
+		const useColors = optionsOrFallback(options.colors, false);
+
+		const obj = this.toJson(options, true);
+
+		return Stats.jsonToString(obj, useColors);
+	}
+
+	static jsonToString(obj, useColors) {
+		const buf = [];
+
+		const defaultColors = {
+			bold: "\u001b[1m",
+			yellow: "\u001b[1m\u001b[33m",
+			red: "\u001b[1m\u001b[31m",
+			green: "\u001b[1m\u001b[32m",
+			cyan: "\u001b[1m\u001b[36m",
+			magenta: "\u001b[1m\u001b[35m"
+		};
+
+		const colors = Object.keys(defaultColors).reduce(
+			(obj, color) => {
+				obj[color] = str => {
+					if (useColors) {
+						buf.push(
+							useColors === true || useColors[color] === undefined
+								? defaultColors[color]
+								: useColors[color]
+						);
+					}
+					buf.push(str);
+					if (useColors) {
+						buf.push("\u001b[39m\u001b[22m");
+					}
+				};
+				return obj;
+			},
+			{
+				normal: str => buf.push(str)
+			}
+		);
+
+		const coloredTime = time => {
+			let times = [800, 400, 200, 100];
+			if (obj.time) {
+				times = [obj.time / 2, obj.time / 4, obj.time / 8, obj.time / 16];
+			}
+			if (time < times[3]) colors.normal(`${time}ms`);
+			else if (time < times[2]) colors.bold(`${time}ms`);
+			else if (time < times[1]) colors.green(`${time}ms`);
+			else if (time < times[0]) colors.yellow(`${time}ms`);
+			else colors.red(`${time}ms`);
+		};
+
+		const newline = () => buf.push("\n");
+
+		const getText = (arr, row, col) => {
+			return arr[row][col].value;
+		};
+
+		const table = (array, align, splitter) => {
+			const rows = array.length;
+			const cols = array[0].length;
+			const colSizes = new Array(cols);
+			for (let col = 0; col < cols; col++) colSizes[col] = 0;
+			for (let row = 0; row < rows; row++) {
+				for (let col = 0; col < cols; col++) {
+					const value = `${getText(array, row, col)}`;
+					if (value.l

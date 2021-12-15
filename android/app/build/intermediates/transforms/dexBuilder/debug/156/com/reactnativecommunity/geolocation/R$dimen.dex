@@ -1,0 +1,246 @@
+ (or to run tests in files that are
+	   * already in the `require` cache), make sure to clear them from
+	   * the cache first!
+	   *
+	   * @public
+	   * @see {@link Mocha#unloadFiles}
+	   * @see {@link Runner#run}
+	   * @param {DoneCB} [fn] - Callback invoked when test execution completed.
+	   * @returns {Runner} runner instance
+	   * @example
+	   *
+	   * // exit with non-zero status if there were test failures
+	   * mocha.run(failures => process.exitCode = failures ? 1 : 0);
+	   */
+
+	  Mocha.prototype.run = function (fn) {
+	    this._guardRunningStateTransition();
+
+	    this._state = mochaStates.RUNNING;
+
+	    if (this._previousRunner) {
+	      this._previousRunner.dispose();
+
+	      this.suite.reset();
+	    }
+
+	    if (this.files.length && !this._lazyLoadFiles) {
+	      this.loadFiles();
+	    }
+
+	    var self = this;
+	    var suite = this.suite;
+	    var options = this.options;
+	    options.files = this.files;
+	    var runner = new this._runnerClass(suite, {
+	      delay: options.delay,
+	      cleanReferencesAfterRun: this._cleanReferencesAfterRun
+	    });
+	    statsCollector(runner);
+	    var reporter = new this._reporter(runner, options);
+	    runner.checkLeaks = options.checkLeaks === true;
+	    runner.fullStackTrace = options.fullTrace;
+	    runner.asyncOnly = options.asyncOnly;
+	    runner.allowUncaught = options.allowUncaught;
+	    runner.forbidOnly = options.forbidOnly;
+	    runner.forbidPending = options.forbidPending;
+
+	    if (options.grep) {
+	      runner.grep(options.grep, options.invert);
+	    }
+
+	    if (options.global) {
+	      runner.globals(options.global);
+	    }
+
+	    if (options.growl) {
+	      this._growl(runner);
+	    }
+
+	    if (options.color !== undefined) {
+	      exports.reporters.Base.useColors = options.color;
+	    }
+
+	    exports.reporters.Base.inlineDiffs = options.inlineDiffs;
+	    exports.reporters.Base.hideDiff = !options.diff;
+
+	    function done(failures) {
+	      self._previousRunner = runner;
+
+	      if (self._cleanReferencesAfterRun) {
+	        self._state = mochaStates.REFERENCES_CLEANED;
+	      } else {
+	        self._state = mochaStates.INIT;
+	      }
+
+	      fn = fn || utils.noop;
+
+	      if (reporter.done) {
+	        reporter.done(failures, fn);
+	      } else {
+	        fn(failures);
+	      }
+	    }
+
+	    return runner.run(done, {
+	      files: this.files,
+	      options: options
+	    });
+	  };
+	  /**
+	   * Assigns hooks to the root suite
+	   * @param {MochaRootHookObject} [hooks] - Hooks to assign to root suite
+	   * @chainable
+	   */
+
+
+	  Mocha.prototype.rootHooks = function rootHooks(hooks) {
+	    if (utils.type(hooks) === 'object') {
+	      var beforeAll = [].concat(hooks.beforeAll || []);
+	      var beforeEach = [].concat(hooks.beforeEach || []);
+	      var afterAll = [].concat(hooks.afterAll || []);
+	      var afterEach = [].concat(hooks.afterEach || []);
+	      var rootSuite = this.suite;
+	      beforeAll.forEach(function (hook) {
+	        rootSuite.beforeAll(hook);
+	      });
+	      beforeEach.forEach(function (hook) {
+	        rootSuite.beforeEach(hook);
+	      });
+	      afterAll.forEach(function (hook) {
+	        rootSuite.afterAll(hook);
+	      });
+	      afterEach.forEach(function (hook) {
+	        rootSuite.afterEach(hook);
+	      });
+	    }
+
+	    return this;
+	  };
+	  /**
+	   * Toggles parallel mode.
+	   *
+	   * Must be run before calling {@link Mocha#run}. Changes the `Runner` class to
+	   * use; also enables lazy file loading if not already done so.
+	   * @param {boolean} [enable] - If `true`, enable; otherwise disable.
+	   * @throws If run in browser
+	   * @throws If Mocha not in "INIT" state
+	   * @returns {Mocha}
+	   * @chainable
+	   * @public
+	   */
+
+
+	  Mocha.prototype.parallelMode = function parallelMode(enable) {
+	    if (utils.isBrowser()) {
+	      throw createUnsupportedError('parallel mode is only supported in Node.js');
+	    }
+
+	    var parallel = enable === true;
+
+	    if (parallel === this.options.parallel && this._lazyLoadFiles && this._runnerClass !== exports.Runner) {
+	      return this;
+	    }
+
+	    if (this._state !== mochaStates.INIT) {
+	      throw createUnsupportedError('cannot change parallel mode after having called run()');
+	    }
+
+	    this.options.parallel = parallel; // swap Runner class
+
+	    this._runnerClass = parallel ? require$$11 : exports.Runner; // lazyLoadFiles may have been set `true` otherwise (for ESM loading),
+	    // so keep `true` if so.
+
+	    return this.lazyLoadFiles(this._lazyLoadFiles || parallel);
+	  };
+	  /**
+	   * Disables implicit call to {@link Mocha#loadFiles} in {@link Mocha#run}. This
+	   * setting is used by watch mode, parallel mode, and for loading ESM files.
+	   * @todo This should throw if we've already loaded files; such behavior
+	   * necessitates adding a new state.
+	   * @param {boolean} [enable] - If `true`, disable eager loading of files in
+	   * {@link Mocha#run}
+	   * @chainable
+	   * @public
+	   */
+
+
+	  Mocha.prototype.lazyLoadFiles = function lazyLoadFiles(enable) {
+	    this._lazyLoadFiles = enable === true;
+	    debug('set lazy load to %s', enable);
+	    return this;
+	  };
+	  /**
+	   * An alternative way to define root hooks that works with parallel runs.
+	   * @private
+	   * @typedef {Object} MochaRootHookObject
+	   * @property {Function|Function[]} [beforeAll] - "Before all" hook(s)
+	   * @property {Function|Function[]} [beforeEach] - "Before each" hook(s)
+	   * @property {Function|Function[]} [afterAll] - "After all" hook(s)
+	   * @property {Function|Function[]} [afterEach] - "After each" hook(s)
+	   */
+
+	  /**
+	   * An function that returns a {@link MochaRootHookObject}, either sync or async.
+	   * @private
+	   * @callback MochaRootHookFunction
+	   * @returns {MochaRootHookObject|Promise<MochaRootHookObject>}
+	   */
+
+	});
+
+	/* eslint no-unused-vars: off */
+
+	/* eslint-env commonjs */
+
+	/**
+	 * Shim process.stdout.
+	 */
+
+
+	process$1.stdout = browserStdout({
+	  label: false
+	});
+	/**
+	 * Create a Mocha instance.
+	 *
+	 * @return {undefined}
+	 */
+
+	var mocha$1 = new mocha({
+	  reporter: 'html'
+	});
+	/**
+	 * Save timer references to avoid Sinon interfering (see GH-237).
+	 */
+
+	var Date$4 = commonjsGlobal.Date;
+	var setTimeout$3 = commonjsGlobal.setTimeout;
+	var uncaughtExceptionHandlers = [];
+	var originalOnerrorHandler = commonjsGlobal.onerror;
+	/**
+	 * Remove uncaughtException listener.
+	 * Revert to original onerror handler if previously defined.
+	 */
+
+	process$1.removeListener = function (e, fn) {
+	  if (e === 'uncaughtException') {
+	    if (originalOnerrorHandler) {
+	      commonjsGlobal.onerror = originalOnerrorHandler;
+	    } else {
+	      commonjsGlobal.onerror = function () {};
+	    }
+
+	    var i = uncaughtExceptionHandlers.indexOf(fn);
+
+	    if (i !== -1) {
+	      uncaughtExceptionHandlers.splice(i, 1);
+	    }
+	  }
+	};
+	/**
+	 * Implements listenerCount for 'uncaughtException'.
+	 */
+
+
+	process$1.listener

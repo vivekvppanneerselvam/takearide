@@ -1,0 +1,32 @@
+/**
+ * @license
+ * Copyright Google Inc. All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://angular.io/license
+ */
+import { ValueTransformer, visitValue } from '../util';
+import { StaticSymbol } from './static_symbol';
+import { isGeneratedFile, stripSummaryForJitFileSuffix, stripSummaryForJitNameSuffix, summaryForJitFileName, summaryForJitName } from './util';
+const TS = /^(?!.*\.d\.ts$).*\.ts$/;
+export class ResolvedStaticSymbol {
+    constructor(symbol, metadata) {
+        this.symbol = symbol;
+        this.metadata = metadata;
+    }
+}
+const SUPPORTED_SCHEMA_VERSION = 4;
+/**
+ * This class is responsible for loading metadata per symbol,
+ * and normalizing references between symbols.
+ *
+ * Internally, it only uses symbols without members,
+ * and deduces the values for symbols with members based
+ * on these symbols.
+ */
+export class StaticSymbolResolver {
+    constructor(host, staticSymbolCache, summaryResolver, errorRecorder) {
+        this.host = host;
+        this.staticSymbolCache = staticSymbolCache;
+        this.summaryResolver = summaryResolver;
+        this.errorRecord

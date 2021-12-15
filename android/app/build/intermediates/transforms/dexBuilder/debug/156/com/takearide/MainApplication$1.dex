@@ -1,0 +1,53 @@
+ {?} */
+    NgbDropdownAnchor.prototype.anchorEl;
+    /** @type {?} */
+    NgbDropdownAnchor.prototype.dropdown;
+    /** @type {?} */
+    NgbDropdownAnchor.prototype._elementRef;
+}
+/**
+ * Allows the dropdown to be toggled via click. This directive is optional: you can use NgbDropdownAnchor as an
+ * alternative.
+ */
+export class NgbDropdownToggle extends NgbDropdownAnchor {
+    /**
+     * @param {?} dropdown
+     * @param {?} elementRef
+     */
+    constructor(dropdown, elementRef) {
+        super(dropdown, elementRef);
+    }
+    /**
+     * @return {?}
+     */
+    toggleOpen() { this.dropdown.toggle(); }
+}
+NgbDropdownToggle.decorators = [
+    { type: Directive, args: [{
+                selector: '[ngbDropdownToggle]',
+                host: {
+                    'class': 'dropdown-toggle',
+                    'aria-haspopup': 'true',
+                    '[attr.aria-expanded]': 'dropdown.isOpen()',
+                    '(click)': 'toggleOpen()'
+                },
+                providers: [{ provide: NgbDropdownAnchor, useExisting: forwardRef(() => NgbDropdownToggle) }]
+            },] },
+];
+/** @nocollapse */
+NgbDropdownToggle.ctorParameters = () => [
+    { type: undefined, decorators: [{ type: Inject, args: [forwardRef(() => NgbDropdown),] }] },
+    { type: ElementRef }
+];
+/**
+ * Transforms a node into a dropdown.
+ */
+export class NgbDropdown {
+    /**
+     * @param {?} _changeDetector
+     * @param {?} config
+     * @param {?} _document
+     * @param {?} _ngZone
+     */
+    constructor(_changeDetector, config, _document, _ngZone) {
+        this._changeDetector = _ch

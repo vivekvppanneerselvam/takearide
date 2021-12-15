@@ -1,0 +1,20 @@
+
+            if (symbol.flags & (32 | 64)) {
+                if (symbol.valueDeclaration && ts.isBinaryExpression(symbol.valueDeclaration.parent)) {
+                    var jsdocType = getJSDocTypeReference(node, symbol, typeArguments);
+                    if (jsdocType) {
+                        return jsdocType;
+                    }
+                }
+                return getTypeFromClassOrInterfaceReference(node, symbol, typeArguments);
+            }
+            if (symbol.flags & 524288) {
+                return getTypeFromTypeAliasReference(node, symbol, typeArguments);
+            }
+            if (symbol.flags & 16 &&
+                isJSDocTypeReference(node) &&
+                (symbol.members || ts.getJSDocClassTag(symbol.valueDeclaration))) {
+                return getInferredClassType(symbol);
+            }
+        }
+        function getSubstitutionType(typeVaria

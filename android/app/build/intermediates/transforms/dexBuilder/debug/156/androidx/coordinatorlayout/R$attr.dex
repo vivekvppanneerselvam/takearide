@@ -1,0 +1,42 @@
+Content) {
+	      return null;
+	    }
+	
+	    var index = this._findSourceIndex(aSource);
+	    if (index >= 0) {
+	      return this.sourcesContent[index];
+	    }
+	
+	    var relativeSource = aSource;
+	    if (this.sourceRoot != null) {
+	      relativeSource = util.relative(this.sourceRoot, relativeSource);
+	    }
+	
+	    var url;
+	    if (this.sourceRoot != null
+	        && (url = util.urlParse(this.sourceRoot))) {
+	      // XXX: file:// URIs and absolute paths lead to unexpected behavior for
+	      // many users. We can help them out when they expect file:// URIs to
+	      // behave like it would if they were running a local HTTP server. See
+	      // https://bugzilla.mozilla.org/show_bug.cgi?id=885597.
+	      var fileUriAbsPath = relativeSource.replace(/^file:\/\//, "");
+	      if (url.scheme == "file"
+	          && this._sources.has(fileUriAbsPath)) {
+	        return this.sourcesContent[this._sources.indexOf(fileUriAbsPath)]
+	      }
+	
+	      if ((!url.path || url.path == "/")
+	          && this._sources.has("/" + relativeSource)) {
+	        return this.sourcesContent[this._sources.indexOf("/" + relativeSource)];
+	      }
+	    }
+	
+	    // This function is used recursively from
+	    // IndexedSourceMapConsumer.prototype.sourceContentFor. In that case, we
+	    // don't want to throw if we can't find the source - we just want to
+	    // return null, so we provide a flag to exit gracefully.
+	    if (nullOnMissing) {
+	      return null;
+	    }
+	    else {
+	      throw new Error('"' + relativeSour

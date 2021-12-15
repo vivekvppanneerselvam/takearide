@@ -1,0 +1,56 @@
+/**
+ * @license Angular v6.1.10
+ * (c) 2010-2018 Google, Inc. https://angular.io/
+ * License: MIT
+ */
+
+import { AnimationBuilder, AnimationFactory, sequence } from '@angular/animations';
+import { Inject, Injectable, RendererFactory2, ViewEncapsulation, NgZone, InjectionToken, NgModule } from '@angular/core';
+import { DOCUMENT, ɵDomRendererFactory2, BrowserModule } from '@angular/platform-browser';
+import { ɵAnimationEngine, AnimationDriver, ɵAnimationStyleNormalizer, ɵCssKeyframesDriver, ɵNoopAnimationDriver, ɵWebAnimationsDriver, ɵWebAnimationsStyleNormalizer, ɵsupportsWebAnimations } from '@angular/animations/browser';
+import { DOCUMENT as DOCUMENT$1 } from '@angular/common';
+
+/**
+ * @fileoverview added by tsickle
+ * @suppress {checkTypes,extraRequire,uselessCode} checked by tsc
+ */
+class BrowserAnimationBuilder extends AnimationBuilder {
+    /**
+     * @param {?} rootRenderer
+     * @param {?} doc
+     */
+    constructor(rootRenderer, doc) {
+        super();
+        this._nextAnimationId = 0;
+        /** @type {?} */
+        const typeData = /** @type {?} */ ({
+            id: '0',
+            encapsulation: ViewEncapsulation.None,
+            styles: [],
+            data: { animation: [] }
+        });
+        this._renderer = /** @type {?} */ (rootRenderer.createRenderer(doc.body, typeData));
+    }
+    /**
+     * @param {?} animation
+     * @return {?}
+     */
+    build(animation) {
+        /** @type {?} */
+        const id = this._nextAnimationId.toString();
+        this._nextAnimationId++;
+        /** @type {?} */
+        const entry = Array.isArray(animation) ? sequence(animation) : animation;
+        issueAnimationCommand(this._renderer, null, id, 'register', [entry]);
+        return new BrowserAnimationFactory(id, this._renderer);
+    }
+}
+BrowserAnimationBuilder.decorators = [
+    { type: Injectable }
+];
+/** @nocollapse */
+BrowserAnimationBuilder.ctorParameters = () => [
+    { type: RendererFactory2 },
+    { type: undefined, decorators: [{ type: Inject, args: [DOCUMENT,] }] }
+];
+c

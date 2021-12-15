@@ -1,0 +1,64 @@
+est filter matches?
+	   * @param {boolean} [options.noHighlighting] - Disable syntax highlighting?
+	   * @param {string|constructor} [options.reporter] - Reporter name or constructor.
+	   * @param {Object} [options.reporterOption] - Reporter settings object.
+	   * @param {number} [options.retries] - Number of times to retry failed tests.
+	   * @param {number} [options.slow] - Slow threshold value.
+	   * @param {number|string} [options.timeout] - Timeout threshold value.
+	   * @param {string} [options.ui] - Interface name.
+	   * @param {boolean} [options.parallel] - Run jobs in parallel
+	   * @param {number} [options.jobs] - Max number of worker processes for parallel runs
+	   * @param {MochaRootHookObject} [options.rootHooks] - Hooks to bootstrap the root
+	   * suite with
+	   * @param {boolean} [options.isWorker] - Should be `true` if `Mocha` process is running in a worker process.
+	   */
+
+	  function Mocha(options) {
+	    options = utils.assign({}, mocharc$2, options || {});
+	    this.files = [];
+	    this.options = options; // root suite
+
+	    this.suite = new exports.Suite('', new exports.Context(), true);
+	    this._cleanReferencesAfterRun = true;
+	    this._state = mochaStates.INIT;
+	    this.grep(options.grep).fgrep(options.fgrep).ui(options.ui).reporter(options.reporter, options.reporterOption || options.reporterOptions // reporterOptions was previously the only way to specify options to reporter
+	    ).slow(options.slow).global(options.global); // this guard exists because Suite#timeout does not consider `undefined` to be valid input
+
+	    if (typeof options.timeout !== 'undefined') {
+	      this.timeout(options.timeout === false ? 0 : options.timeout);
+	    }
+
+	    if ('retries' in options) {
+	      this.retries(options.retries);
+	    }
+
+	    ['allowUncaught', 'asyncOnly', 'bail', 'checkLeaks', 'color', 'delay', 'diff', 'forbidOnly', 'forbidPending', 'fullTrace', 'growl', 'inlineDiffs', 'invert'].forEach(function (opt) {
+	      if (options[opt]) {
+	        this[opt]();
+	      }
+	    }, this);
+
+	    if (options.rootHooks) {
+	      this.rootHooks(options.rootHooks);
+	    }
+	    /**
+	     * The class which we'll instantiate in {@link Mocha#run}.  Defaults to
+	     * {@link Runner} in serial mode; changes in parallel mode.
+	     * @memberof Mocha
+	     * @private
+	     */
+
+
+	    this._runnerClass = exports.Runner;
+	    /**
+	     * Whether or not to call {@link Mocha#loadFiles} implicitly when calling
+	     * {@link Mocha#run}.  If this is `true`, then it's up to the consumer to call
+	     * {@link Mocha#loadFiles} _or_ {@link Mocha#loadFilesAsync}.
+	     * @private
+	     * @memberof Mocha
+	     */
+
+	    this._lazyLoadFiles = false;
+	    /**
+	     * It's useful for a Mocha instance to know if it's running in a worker process.
+	     * We could derive this via other means, but it's helpf

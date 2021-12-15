@@ -1,0 +1,49 @@
+<div align="center">
+  <a href="https://github.com/webpack/webpack">
+    <img width="200" height="200" src="https://webpack.js.org/assets/icon-square-big.svg">
+  </a>
+</div>
+
+[![npm][npm]][npm-url]
+[![node][node]][node-url]
+[![deps][deps]][deps-url]
+[![tests][tests]][tests-url]
+[![coverage][cover]][cover-url]
+[![chat][chat]][chat-url]
+[![size][size]][size-url]
+
+# webpack-dev-middleware
+
+An express-style development middleware for use with [webpack](https://webpack.js.org)
+bundles and allows for serving of the files emitted from webpack.
+This should be used for **development only**.
+
+Some of the benefits of using this middleware include:
+
+- No files are written to disk, rather it handles files in memory
+- If files changed in watch mode, the middleware delays requests until compiling
+  has completed.
+- Supports hot module reload (HMR).
+
+## Requirements
+
+This module requires a minimum of Node v6.9.0 and Webpack v4.0.0, and must be used with a
+server that accepts express-style middleware.
+
+## Getting Started
+
+First thing's first, install the module:
+
+```console
+npm install webpack-dev-middleware --save-dev
+```
+
+_Note: We do not recommend installing this module globally._
+
+## Usage
+
+```js
+const webpack = require('webpack');
+const middleware = require('webpack-dev-middleware');
+const compiler = webpack({
+  // w

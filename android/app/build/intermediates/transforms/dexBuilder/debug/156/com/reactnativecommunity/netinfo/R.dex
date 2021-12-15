@@ -1,0 +1,27 @@
+) {
+                    const oldLen = functionParams.length;
+                    functionParams.push(...(map['parameters'] || []));
+                    const result = super.visitStringMap(map, functionParams);
+                    functionParams.length = oldLen;
+                    return result;
+                }
+                else if (symbolic === 'reference') {
+                    const module = map['module'];
+                    const name = map['name'] ? unescapeIdentifier(map['name']) : map['name'];
+                    if (!name) {
+                        return null;
+                    }
+                    let filePath;
+                    if (module) {
+                        filePath = self.resolveModule(module, sourceSymbol.filePath);
+                        if (!filePath) {
+                            return {
+                                __symbolic: 'error',
+                                message: `Could not resolve ${module} relative to ${sourceSymbol.filePath}.`,
+                                line: map.line,
+                                character: map.character,
+                                fileName: getOriginalName()
+                            };
+                        }
+                        return {
+                            

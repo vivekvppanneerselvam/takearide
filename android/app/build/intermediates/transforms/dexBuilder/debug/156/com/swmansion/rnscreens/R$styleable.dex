@@ -1,0 +1,1609 @@
+ROTOTYPE$2] = NativeArrayBuffer[PROTOTYPE$2];
+	    for (var keys$3 = getOwnPropertyNames$2(NativeArrayBuffer), j$1 = 0, key$1; keys$3.length > j$1;) {
+	      if (!((key$1 = keys$3[j$1++]) in $ArrayBuffer)) {
+	        createNonEnumerableProperty($ArrayBuffer, key$1, NativeArrayBuffer[key$1]);
+	      }
+	    }
+	    ArrayBufferPrototype.constructor = $ArrayBuffer;
+	  }
+
+	  // WebKit bug - the same parent prototype for typed arrays and data view
+	  if (objectSetPrototypeOf && objectGetPrototypeOf($DataViewPrototype) !== ObjectPrototype$2) {
+	    objectSetPrototypeOf($DataViewPrototype, ObjectPrototype$2);
+	  }
+
+	  // iOS Safari 7.x bug
+	  var testView = new $DataView(new $ArrayBuffer(2));
+	  var nativeSetInt8 = $DataViewPrototype.setInt8;
+	  testView.setInt8(0, 2147483648);
+	  testView.setInt8(1, 2147483649);
+	  if (testView.getInt8(0) || !testView.getInt8(1)) redefineAll($DataViewPrototype, {
+	    setInt8: function setInt8(byteOffset, value) {
+	      nativeSetInt8.call(this, byteOffset, value << 24 >> 24);
+	    },
+	    setUint8: function setUint8(byteOffset, value) {
+	      nativeSetInt8.call(this, byteOffset, value << 24 >> 24);
+	    }
+	  }, { unsafe: true });
+	}
+
+	setToStringTag($ArrayBuffer, ARRAY_BUFFER);
+	setToStringTag($DataView, DATA_VIEW);
+
+	var arrayBuffer = {
+	  ArrayBuffer: $ArrayBuffer,
+	  DataView: $DataView
+	};
+
+	var ARRAY_BUFFER$1 = 'ArrayBuffer';
+	var ArrayBuffer$1 = arrayBuffer[ARRAY_BUFFER$1];
+	var NativeArrayBuffer$1 = global_1[ARRAY_BUFFER$1];
+
+	// `ArrayBuffer` constructor
+	// https://tc39.github.io/ecma262/#sec-arraybuffer-constructor
+	_export({ global: true, forced: NativeArrayBuffer$1 !== ArrayBuffer$1 }, {
+	  ArrayBuffer: ArrayBuffer$1
+	});
+
+	setSpecies(ARRAY_BUFFER$1);
+
+	var notARegexp = function (it) {
+	  if (isRegexp(it)) {
+	    throw TypeError("The method doesn't accept regular expressions");
+	  } return it;
+	};
+
+	var MATCH$2 = wellKnownSymbol('match');
+
+	var correctIsRegexpLogic = function (METHOD_NAME) {
+	  var regexp = /./;
+	  try {
+	    '/./'[METHOD_NAME](regexp);
+	  } catch (e) {
+	    try {
+	      regexp[MATCH$2] = false;
+	      return '/./'[METHOD_NAME](regexp);
+	    } catch (f) { /* empty */ }
+	  } return false;
+	};
+
+	// `String.prototype.includes` method
+	// https://tc39.github.io/ecma262/#sec-string.prototype.includes
+	_export({ target: 'String', proto: true, forced: !correctIsRegexpLogic('includes') }, {
+	  includes: function includes(searchString /* , position = 0 */) {
+	    return !!~String(requireObjectCoercible(this))
+	      .indexOf(notARegexp(searchString), arguments.length > 1 ? arguments[1] : undefined);
+	  }
+	});
+
+	var non = '\u200B\u0085\u180E';
+
+	// check that a method works with the correct list
+	// of whitespaces and has a correct name
+	var stringTrimForced = function (METHOD_NAME) {
+	  return fails(function () {
+	    return !!whitespaces[METHOD_NAME]() || non[METHOD_NAME]() != non || whitespaces[METHOD_NAME].name !== METHOD_NAME;
+	  });
+	};
+
+	var $trim = stringTrim.trim;
+
+
+	// `String.prototype.trim` method
+	// https://tc39.github.io/ecma262/#sec-string.prototype.trim
+	_export({ target: 'String', proto: true, forced: stringTrimForced('trim') }, {
+	  trim: function trim() {
+	    return $trim(this);
+	  }
+	});
+
+	var ITERATOR$2 = wellKnownSymbol('iterator');
+	var SAFE_CLOSING = false;
+
+	try {
+	  var called = 0;
+	  var iteratorWithReturn = {
+	    next: function () {
+	      return { done: !!called++ };
+	    },
+	    'return': function () {
+	      SAFE_CLOSING = true;
+	    }
+	  };
+	  iteratorWithReturn[ITERATOR$2] = function () {
+	    return this;
+	  };
+	  // eslint-disable-next-line no-throw-literal
+	  Array.from(iteratorWithReturn, function () { throw 2; });
+	} catch (error) { /* empty */ }
+
+	var checkCorrectnessOfIteration = function (exec, SKIP_CLOSING) {
+	  if (!SKIP_CLOSING && !SAFE_CLOSING) return false;
+	  var ITERATION_SUPPORT = false;
+	  try {
+	    var object = {};
+	    object[ITERATOR$2] = function () {
+	      return {
+	        next: function () {
+	          return { done: ITERATION_SUPPORT = true };
+	        }
+	      };
+	    };
+	    exec(object);
+	  } catch (error) { /* empty */ }
+	  return ITERATION_SUPPORT;
+	};
+
+	var defineProperty$9 = objectDefineProperty.f;
+
+
+
+
+
+	var Int8Array$1 = global_1.Int8Array;
+	var Int8ArrayPrototype = Int8Array$1 && Int8Array$1.prototype;
+	var Uint8ClampedArray = global_1.Uint8ClampedArray;
+	var Uint8ClampedArrayPrototype = Uint8ClampedArray && Uint8ClampedArray.prototype;
+	var TypedArray = Int8Array$1 && objectGetPrototypeOf(Int8Array$1);
+	var TypedArrayPrototype = Int8ArrayPrototype && objectGetPrototypeOf(Int8ArrayPrototype);
+	var ObjectPrototype$3 = Object.prototype;
+	var isPrototypeOf = ObjectPrototype$3.isPrototypeOf;
+
+	var TO_STRING_TAG$3 = wellKnownSymbol('toStringTag');
+	var TYPED_ARRAY_TAG = uid('TYPED_ARRAY_TAG');
+	// Fixing native typed arrays in Opera Presto crashes the browser, see #595
+	var NATIVE_ARRAY_BUFFER_VIEWS = arrayBufferNative && !!objectSetPrototypeOf && classof(global_1.opera) !== 'Opera';
+	var TYPED_ARRAY_TAG_REQIRED = false;
+	var NAME$1;
+
+	var TypedArrayConstructorsList = {
+	  Int8Array: 1,
+	  Uint8Array: 1,
+	  Uint8ClampedArray: 1,
+	  Int16Array: 2,
+	  Uint16Array: 2,
+	  Int32Array: 4,
+	  Uint32Array: 4,
+	  Float32Array: 4,
+	  Float64Array: 8
+	};
+
+	var isView = function isView(it) {
+	  var klass = classof(it);
+	  return klass === 'DataView' || has(TypedArrayConstructorsList, klass);
+	};
+
+	var isTypedArray = function (it) {
+	  return isObject(it) && has(TypedArrayConstructorsList, classof(it));
+	};
+
+	var aTypedArray = function (it) {
+	  if (isTypedArray(it)) return it;
+	  throw TypeError('Target is not a typed array');
+	};
+
+	var aTypedArrayConstructor = function (C) {
+	  if (objectSetPrototypeOf) {
+	    if (isPrototypeOf.call(TypedArray, C)) return C;
+	  } else for (var ARRAY in TypedArrayConstructorsList) if (has(TypedArrayConstructorsList, NAME$1)) {
+	    var TypedArrayConstructor = global_1[ARRAY];
+	    if (TypedArrayConstructor && (C === TypedArrayConstructor || isPrototypeOf.call(TypedArrayConstructor, C))) {
+	      return C;
+	    }
+	  } throw TypeError('Target is not a typed array constructor');
+	};
+
+	var exportTypedArrayMethod = function (KEY, property, forced) {
+	  if (!descriptors) return;
+	  if (forced) for (var ARRAY in TypedArrayConstructorsList) {
+	    var TypedArrayConstructor = global_1[ARRAY];
+	    if (TypedArrayConstructor && has(TypedArrayConstructor.prototype, KEY)) {
+	      delete TypedArrayConstructor.prototype[KEY];
+	    }
+	  }
+	  if (!TypedArrayPrototype[KEY] || forced) {
+	    redefine(TypedArrayPrototype, KEY, forced ? property
+	      : NATIVE_ARRAY_BUFFER_VIEWS && Int8ArrayPrototype[KEY] || property);
+	  }
+	};
+
+	var exportTypedArrayStaticMethod = function (KEY, property, forced) {
+	  var ARRAY, TypedArrayConstructor;
+	  if (!descriptors) return;
+	  if (objectSetPrototypeOf) {
+	    if (forced) for (ARRAY in TypedArrayConstructorsList) {
+	      TypedArrayConstructor = global_1[ARRAY];
+	      if (TypedArrayConstructor && has(TypedArrayConstructor, KEY)) {
+	        delete TypedArrayConstructor[KEY];
+	      }
+	    }
+	    if (!TypedArray[KEY] || forced) {
+	      // V8 ~ Chrome 49-50 `%TypedArray%` methods are non-writable non-configurable
+	      try {
+	        return redefine(TypedArray, KEY, forced ? property : NATIVE_ARRAY_BUFFER_VIEWS && Int8Array$1[KEY] || property);
+	      } catch (error) { /* empty */ }
+	    } else return;
+	  }
+	  for (ARRAY in TypedArrayConstructorsList) {
+	    TypedArrayConstructor = global_1[ARRAY];
+	    if (TypedArrayConstructor && (!TypedArrayConstructor[KEY] || forced)) {
+	      redefine(TypedArrayConstructor, KEY, property);
+	    }
+	  }
+	};
+
+	for (NAME$1 in TypedArrayConstructorsList) {
+	  if (!global_1[NAME$1]) NATIVE_ARRAY_BUFFER_VIEWS = false;
+	}
+
+	// WebKit bug - typed arrays constructors prototype is Object.prototype
+	if (!NATIVE_ARRAY_BUFFER_VIEWS || typeof TypedArray != 'function' || TypedArray === Function.prototype) {
+	  // eslint-disable-next-line no-shadow
+	  TypedArray = function TypedArray() {
+	    throw TypeError('Incorrect invocation');
+	  };
+	  if (NATIVE_ARRAY_BUFFER_VIEWS) for (NAME$1 in TypedArrayConstructorsList) {
+	    if (global_1[NAME$1]) objectSetPrototypeOf(global_1[NAME$1], TypedArray);
+	  }
+	}
+
+	if (!NATIVE_ARRAY_BUFFER_VIEWS || !TypedArrayPrototype || TypedArrayPrototype === ObjectPrototype$3) {
+	  TypedArrayPrototype = TypedArray.prototype;
+	  if (NATIVE_ARRAY_BUFFER_VIEWS) for (NAME$1 in TypedArrayConstructorsList) {
+	    if (global_1[NAME$1]) objectSetPrototypeOf(global_1[NAME$1].prototype, TypedArrayPrototype);
+	  }
+	}
+
+	// WebKit bug - one more object in Uint8ClampedArray prototype chain
+	if (NATIVE_ARRAY_BUFFER_VIEWS && objectGetPrototypeOf(Uint8ClampedArrayPrototype) !== TypedArrayPrototype) {
+	  objectSetPrototypeOf(Uint8ClampedArrayPrototype, TypedArrayPrototype);
+	}
+
+	if (descriptors && !has(TypedArrayPrototype, TO_STRING_TAG$3)) {
+	  TYPED_ARRAY_TAG_REQIRED = true;
+	  defineProperty$9(TypedArrayPrototype, TO_STRING_TAG$3, { get: function () {
+	    return isObject(this) ? this[TYPED_ARRAY_TAG] : undefined;
+	  } });
+	  for (NAME$1 in TypedArrayConstructorsList) if (global_1[NAME$1]) {
+	    createNonEnumerableProperty(global_1[NAME$1], TYPED_ARRAY_TAG, NAME$1);
+	  }
+	}
+
+	var arrayBufferViewCore = {
+	  NATIVE_ARRAY_BUFFER_VIEWS: NATIVE_ARRAY_BUFFER_VIEWS,
+	  TYPED_ARRAY_TAG: TYPED_ARRAY_TAG_REQIRED && TYPED_ARRAY_TAG,
+	  aTypedArray: aTypedArray,
+	  aTypedArrayConstructor: aTypedArrayConstructor,
+	  exportTypedArrayMethod: exportTypedArrayMethod,
+	  exportTypedArrayStaticMethod: exportTypedArrayStaticMethod,
+	  isView: isView,
+	  isTypedArray: isTypedArray,
+	  TypedArray: TypedArray,
+	  TypedArrayPrototype: TypedArrayPrototype
+	};
+
+	/* eslint-disable no-new */
+
+
+
+	var NATIVE_ARRAY_BUFFER_VIEWS$1 = arrayBufferViewCore.NATIVE_ARRAY_BUFFER_VIEWS;
+
+	var ArrayBuffer$2 = global_1.ArrayBuffer;
+	var Int8Array$2 = global_1.Int8Array;
+
+	var typedArrayConstructorsRequireWrappers = !NATIVE_ARRAY_BUFFER_VIEWS$1 || !fails(function () {
+	  Int8Array$2(1);
+	}) || !fails(function () {
+	  new Int8Array$2(-1);
+	}) || !checkCorrectnessOfIteration(function (iterable) {
+	  new Int8Array$2();
+	  new Int8Array$2(null);
+	  new Int8Array$2(1.5);
+	  new Int8Array$2(iterable);
+	}, true) || fails(function () {
+	  // Safari (11+) bug - a reason why even Safari 13 should load a typed array polyfill
+	  return new Int8Array$2(new ArrayBuffer$2(2), 1, undefined).length !== 1;
+	});
+
+	var toPositiveInteger = function (it) {
+	  var result = toInteger(it);
+	  if (result < 0) throw RangeError("The argument can't be less than 0");
+	  return result;
+	};
+
+	var toOffset = function (it, BYTES) {
+	  var offset = toPositiveInteger(it);
+	  if (offset % BYTES) throw RangeError('Wrong offset');
+	  return offset;
+	};
+
+	var ITERATOR$3 = wellKnownSymbol('iterator');
+
+	var getIteratorMethod = function (it) {
+	  if (it != undefined) return it[ITERATOR$3]
+	    || it['@@iterator']
+	    || iterators[classof(it)];
+	};
+
+	var ITERATOR$4 = wellKnownSymbol('iterator');
+	var ArrayPrototype$1 = Array.prototype;
+
+	// check on default Array iterator
+	var isArrayIteratorMethod = function (it) {
+	  return it !== undefined && (iterators.Array === it || ArrayPrototype$1[ITERATOR$4] === it);
+	};
+
+	var aTypedArrayConstructor$1 = arrayBufferViewCore.aTypedArrayConstructor;
+
+	var typedArrayFrom = function from(source /* , mapfn, thisArg */) {
+	  var O = toObject(source);
+	  var argumentsLength = arguments.length;
+	  var mapfn = argumentsLength > 1 ? arguments[1] : undefined;
+	  var mapping = mapfn !== undefined;
+	  var iteratorMethod = getIteratorMethod(O);
+	  var i, length, result, step, iterator, next;
+	  if (iteratorMethod != undefined && !isArrayIteratorMethod(iteratorMethod)) {
+	    iterator = iteratorMethod.call(O);
+	    next = iterator.next;
+	    O = [];
+	    while (!(step = next.call(iterator)).done) {
+	      O.push(step.value);
+	    }
+	  }
+	  if (mapping && argumentsLength > 2) {
+	    mapfn = functionBindContext(mapfn, arguments[2], 2);
+	  }
+	  length = toLength(O.length);
+	  result = new (aTypedArrayConstructor$1(this))(length);
+	  for (i = 0; length > i; i++) {
+	    result[i] = mapping ? mapfn(O[i], i) : O[i];
+	  }
+	  return result;
+	};
+
+	var typedArrayConstructor = createCommonjsModule(function (module) {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	var getOwnPropertyNames = objectGetOwnPropertyNames.f;
+
+	var forEach = arrayIteration.forEach;
+
+
+
+
+
+
+	var getInternalState = internalState.get;
+	var setInternalState = internalState.set;
+	var nativeDefineProperty = objectDefineProperty.f;
+	var nativeGetOwnPropertyDescriptor = objectGetOwnPropertyDescriptor.f;
+	var round = Math.round;
+	var RangeError = global_1.RangeError;
+	var ArrayBuffer = arrayBuffer.ArrayBuffer;
+	var DataView = arrayBuffer.DataView;
+	var NATIVE_ARRAY_BUFFER_VIEWS = arrayBufferViewCore.NATIVE_ARRAY_BUFFER_VIEWS;
+	var TYPED_ARRAY_TAG = arrayBufferViewCore.TYPED_ARRAY_TAG;
+	var TypedArray = arrayBufferViewCore.TypedArray;
+	var TypedArrayPrototype = arrayBufferViewCore.TypedArrayPrototype;
+	var aTypedArrayConstructor = arrayBufferViewCore.aTypedArrayConstructor;
+	var isTypedArray = arrayBufferViewCore.isTypedArray;
+	var BYTES_PER_ELEMENT = 'BYTES_PER_ELEMENT';
+	var WRONG_LENGTH = 'Wrong length';
+
+	var fromList = function (C, list) {
+	  var index = 0;
+	  var length = list.length;
+	  var result = new (aTypedArrayConstructor(C))(length);
+	  while (length > index) result[index] = list[index++];
+	  return result;
+	};
+
+	var addGetter = function (it, key) {
+	  nativeDefineProperty(it, key, { get: function () {
+	    return getInternalState(this)[key];
+	  } });
+	};
+
+	var isArrayBuffer = function (it) {
+	  var klass;
+	  return it instanceof ArrayBuffer || (klass = classof(it)) == 'ArrayBuffer' || klass == 'SharedArrayBuffer';
+	};
+
+	var isTypedArrayIndex = function (target, key) {
+	  return isTypedArray(target)
+	    && typeof key != 'symbol'
+	    && key in target
+	    && String(+key) == String(key);
+	};
+
+	var wrappedGetOwnPropertyDescriptor = function getOwnPropertyDescriptor(target, key) {
+	  return isTypedArrayIndex(target, key = toPrimitive(key, true))
+	    ? createPropertyDescriptor(2, target[key])
+	    : nativeGetOwnPropertyDescriptor(target, key);
+	};
+
+	var wrappedDefineProperty = function defineProperty(target, key, descriptor) {
+	  if (isTypedArrayIndex(target, key = toPrimitive(key, true))
+	    && isObject(descriptor)
+	    && has(descriptor, 'value')
+	    && !has(descriptor, 'get')
+	    && !has(descriptor, 'set')
+	    // TODO: add validation descriptor w/o calling accessors
+	    && !descriptor.configurable
+	    && (!has(descriptor, 'writable') || descriptor.writable)
+	    && (!has(descriptor, 'enumerable') || descriptor.enumerable)
+	  ) {
+	    target[key] = descriptor.value;
+	    return target;
+	  } return nativeDefineProperty(target, key, descriptor);
+	};
+
+	if (descriptors) {
+	  if (!NATIVE_ARRAY_BUFFER_VIEWS) {
+	    objectGetOwnPropertyDescriptor.f = wrappedGetOwnPropertyDescriptor;
+	    objectDefineProperty.f = wrappedDefineProperty;
+	    addGetter(TypedArrayPrototype, 'buffer');
+	    addGetter(TypedArrayPrototype, 'byteOffset');
+	    addGetter(TypedArrayPrototype, 'byteLength');
+	    addGetter(TypedArrayPrototype, 'length');
+	  }
+
+	  _export({ target: 'Object', stat: true, forced: !NATIVE_ARRAY_BUFFER_VIEWS }, {
+	    getOwnPropertyDescriptor: wrappedGetOwnPropertyDescriptor,
+	    defineProperty: wrappedDefineProperty
+	  });
+
+	  module.exports = function (TYPE, wrapper, CLAMPED) {
+	    var BYTES = TYPE.match(/\d+$/)[0] / 8;
+	    var CONSTRUCTOR_NAME = TYPE + (CLAMPED ? 'Clamped' : '') + 'Array';
+	    var GETTER = 'get' + TYPE;
+	    var SETTER = 'set' + TYPE;
+	    var NativeTypedArrayConstructor = global_1[CONSTRUCTOR_NAME];
+	    var TypedArrayConstructor = NativeTypedArrayConstructor;
+	    var TypedArrayConstructorPrototype = TypedArrayConstructor && TypedArrayConstructor.prototype;
+	    var exported = {};
+
+	    var getter = function (that, index) {
+	      var data = getInternalState(that);
+	      return data.view[GETTER](index * BYTES + data.byteOffset, true);
+	    };
+
+	    var setter = function (that, index, value) {
+	      var data = getInternalState(that);
+	      if (CLAMPED) value = (value = round(value)) < 0 ? 0 : value > 0xFF ? 0xFF : value & 0xFF;
+	      data.view[SETTER](index * BYTES + data.byteOffset, value, true);
+	    };
+
+	    var addElement = function (that, index) {
+	      nativeDefineProperty(that, index, {
+	        get: function () {
+	          return getter(this, index);
+	        },
+	        set: function (value) {
+	          return setter(this, index, value);
+	        },
+	        enumerable: true
+	      });
+	    };
+
+	    if (!NATIVE_ARRAY_BUFFER_VIEWS) {
+	      TypedArrayConstructor = wrapper(function (that, data, offset, $length) {
+	        anInstance(that, TypedArrayConstructor, CONSTRUCTOR_NAME);
+	        var index = 0;
+	        var byteOffset = 0;
+	        var buffer, byteLength, length;
+	        if (!isObject(data)) {
+	          length = toIndex(data);
+	          byteLength = length * BYTES;
+	          buffer = new ArrayBuffer(byteLength);
+	        } else if (isArrayBuffer(data)) {
+	          buffer = data;
+	          byteOffset = toOffset(offset, BYTES);
+	          var $len = data.byteLength;
+	          if ($length === undefined) {
+	            if ($len % BYTES) throw RangeError(WRONG_LENGTH);
+	            byteLength = $len - byteOffset;
+	            if (byteLength < 0) throw RangeError(WRONG_LENGTH);
+	          } else {
+	            byteLength = toLength($length) * BYTES;
+	            if (byteLength + byteOffset > $len) throw RangeError(WRONG_LENGTH);
+	          }
+	          length = byteLength / BYTES;
+	        } else if (isTypedArray(data)) {
+	          return fromList(TypedArrayConstructor, data);
+	        } else {
+	          return typedArrayFrom.call(TypedArrayConstructor, data);
+	        }
+	        setInternalState(that, {
+	          buffer: buffer,
+	          byteOffset: byteOffset,
+	          byteLength: byteLength,
+	          length: length,
+	          view: new DataView(buffer)
+	        });
+	        while (index < length) addElement(that, index++);
+	      });
+
+	      if (objectSetPrototypeOf) objectSetPrototypeOf(TypedArrayConstructor, TypedArray);
+	      TypedArrayConstructorPrototype = TypedArrayConstructor.prototype = objectCreate(TypedArrayPrototype);
+	    } else if (typedArrayConstructorsRequireWrappers) {
+	      TypedArrayConstructor = wrapper(function (dummy, data, typedArrayOffset, $length) {
+	        anInstance(dummy, TypedArrayConstructor, CONSTRUCTOR_NAME);
+	        return inheritIfRequired(function () {
+	          if (!isObject(data)) return new NativeTypedArrayConstructor(toIndex(data));
+	          if (isArrayBuffer(data)) return $length !== undefined
+	            ? new NativeTypedArrayConstructor(data, toOffset(typedArrayOffset, BYTES), $length)
+	            : typedArrayOffset !== undefined
+	              ? new NativeTypedArrayConstructor(data, toOffset(typedArrayOffset, BYTES))
+	              : new NativeTypedArrayConstructor(data);
+	          if (isTypedArray(data)) return fromList(TypedArrayConstructor, data);
+	          return typedArrayFrom.call(TypedArrayConstructor, data);
+	        }(), dummy, TypedArrayConstructor);
+	      });
+
+	      if (objectSetPrototypeOf) objectSetPrototypeOf(TypedArrayConstructor, TypedArray);
+	      forEach(getOwnPropertyNames(NativeTypedArrayConstructor), function (key) {
+	        if (!(key in TypedArrayConstructor)) {
+	          createNonEnumerableProperty(TypedArrayConstructor, key, NativeTypedArrayConstructor[key]);
+	        }
+	      });
+	      TypedArrayConstructor.prototype = TypedArrayConstructorPrototype;
+	    }
+
+	    if (TypedArrayConstructorPrototype.constructor !== TypedArrayConstructor) {
+	      createNonEnumerableProperty(TypedArrayConstructorPrototype, 'constructor', TypedArrayConstructor);
+	    }
+
+	    if (TYPED_ARRAY_TAG) {
+	      createNonEnumerableProperty(TypedArrayConstructorPrototype, TYPED_ARRAY_TAG, CONSTRUCTOR_NAME);
+	    }
+
+	    exported[CONSTRUCTOR_NAME] = TypedArrayConstructor;
+
+	    _export({
+	      global: true, forced: TypedArrayConstructor != NativeTypedArrayConstructor, sham: !NATIVE_ARRAY_BUFFER_VIEWS
+	    }, exported);
+
+	    if (!(BYTES_PER_ELEMENT in TypedArrayConstructor)) {
+	      createNonEnumerableProperty(TypedArrayConstructor, BYTES_PER_ELEMENT, BYTES);
+	    }
+
+	    if (!(BYTES_PER_ELEMENT in TypedArrayConstructorPrototype)) {
+	      createNonEnumerableProperty(TypedArrayConstructorPrototype, BYTES_PER_ELEMENT, BYTES);
+	    }
+
+	    setSpecies(CONSTRUCTOR_NAME);
+	  };
+	} else module.exports = function () { /* empty */ };
+	});
+
+	// `Uint8Array` constructor
+	// https://tc39.github.io/ecma262/#sec-typedarray-objects
+	typedArrayConstructor('Uint8', function (init) {
+	  return function Uint8Array(data, byteOffset, length) {
+	    return init(this, data, byteOffset, length);
+	  };
+	});
+
+	var min$6 = Math.min;
+
+	// `Array.prototype.copyWithin` method implementation
+	// https://tc39.github.io/ecma262/#sec-array.prototype.copywithin
+	var arrayCopyWithin = [].copyWithin || function copyWithin(target /* = 0 */, start /* = 0, end = @length */) {
+	  var O = toObject(this);
+	  var len = toLength(O.length);
+	  var to = toAbsoluteIndex(target, len);
+	  var from = toAbsoluteIndex(start, len);
+	  var end = arguments.length > 2 ? arguments[2] : undefined;
+	  var count = min$6((end === undefined ? len : toAbsoluteIndex(end, len)) - from, len - to);
+	  var inc = 1;
+	  if (from < to && to < from + count) {
+	    inc = -1;
+	    from += count - 1;
+	    to += count - 1;
+	  }
+	  while (count-- > 0) {
+	    if (from in O) O[to] = O[from];
+	    else delete O[to];
+	    to += inc;
+	    from += inc;
+	  } return O;
+	};
+
+	var aTypedArray$1 = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$1 = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.copyWithin` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.copywithin
+	exportTypedArrayMethod$1('copyWithin', function copyWithin(target, start /* , end */) {
+	  return arrayCopyWithin.call(aTypedArray$1(this), target, start, arguments.length > 2 ? arguments[2] : undefined);
+	});
+
+	var $every = arrayIteration.every;
+
+	var aTypedArray$2 = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$2 = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.every` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.every
+	exportTypedArrayMethod$2('every', function every(callbackfn /* , thisArg */) {
+	  return $every(aTypedArray$2(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+	});
+
+	var aTypedArray$3 = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$3 = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.fill` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.fill
+	// eslint-disable-next-line no-unused-vars
+	exportTypedArrayMethod$3('fill', function fill(value /* , start, end */) {
+	  return arrayFill.apply(aTypedArray$3(this), arguments);
+	});
+
+	var $filter$1 = arrayIteration.filter;
+
+
+	var aTypedArray$4 = arrayBufferViewCore.aTypedArray;
+	var aTypedArrayConstructor$2 = arrayBufferViewCore.aTypedArrayConstructor;
+	var exportTypedArrayMethod$4 = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.filter` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.filter
+	exportTypedArrayMethod$4('filter', function filter(callbackfn /* , thisArg */) {
+	  var list = $filter$1(aTypedArray$4(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+	  var C = speciesConstructor(this, this.constructor);
+	  var index = 0;
+	  var length = list.length;
+	  var result = new (aTypedArrayConstructor$2(C))(length);
+	  while (length > index) result[index] = list[index++];
+	  return result;
+	});
+
+	var $find = arrayIteration.find;
+
+	var aTypedArray$5 = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$5 = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.find` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.find
+	exportTypedArrayMethod$5('find', function find(predicate /* , thisArg */) {
+	  return $find(aTypedArray$5(this), predicate, arguments.length > 1 ? arguments[1] : undefined);
+	});
+
+	var $findIndex = arrayIteration.findIndex;
+
+	var aTypedArray$6 = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$6 = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.findIndex` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.findindex
+	exportTypedArrayMethod$6('findIndex', function findIndex(predicate /* , thisArg */) {
+	  return $findIndex(aTypedArray$6(this), predicate, arguments.length > 1 ? arguments[1] : undefined);
+	});
+
+	var $forEach$2 = arrayIteration.forEach;
+
+	var aTypedArray$7 = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$7 = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.forEach` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.foreach
+	exportTypedArrayMethod$7('forEach', function forEach(callbackfn /* , thisArg */) {
+	  $forEach$2(aTypedArray$7(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+	});
+
+	var $includes$1 = arrayIncludes.includes;
+
+	var aTypedArray$8 = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$8 = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.includes` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.includes
+	exportTypedArrayMethod$8('includes', function includes(searchElement /* , fromIndex */) {
+	  return $includes$1(aTypedArray$8(this), searchElement, arguments.length > 1 ? arguments[1] : undefined);
+	});
+
+	var $indexOf$1 = arrayIncludes.indexOf;
+
+	var aTypedArray$9 = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$9 = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.indexOf` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.indexof
+	exportTypedArrayMethod$9('indexOf', function indexOf(searchElement /* , fromIndex */) {
+	  return $indexOf$1(aTypedArray$9(this), searchElement, arguments.length > 1 ? arguments[1] : undefined);
+	});
+
+	var ITERATOR$5 = wellKnownSymbol('iterator');
+	var Uint8Array$1 = global_1.Uint8Array;
+	var arrayValues = es_array_iterator.values;
+	var arrayKeys = es_array_iterator.keys;
+	var arrayEntries = es_array_iterator.entries;
+	var aTypedArray$a = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$a = arrayBufferViewCore.exportTypedArrayMethod;
+	var nativeTypedArrayIterator = Uint8Array$1 && Uint8Array$1.prototype[ITERATOR$5];
+
+	var CORRECT_ITER_NAME = !!nativeTypedArrayIterator
+	  && (nativeTypedArrayIterator.name == 'values' || nativeTypedArrayIterator.name == undefined);
+
+	var typedArrayValues = function values() {
+	  return arrayValues.call(aTypedArray$a(this));
+	};
+
+	// `%TypedArray%.prototype.entries` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.entries
+	exportTypedArrayMethod$a('entries', function entries() {
+	  return arrayEntries.call(aTypedArray$a(this));
+	});
+	// `%TypedArray%.prototype.keys` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.keys
+	exportTypedArrayMethod$a('keys', function keys() {
+	  return arrayKeys.call(aTypedArray$a(this));
+	});
+	// `%TypedArray%.prototype.values` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.values
+	exportTypedArrayMethod$a('values', typedArrayValues, !CORRECT_ITER_NAME);
+	// `%TypedArray%.prototype[@@iterator]` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype-@@iterator
+	exportTypedArrayMethod$a(ITERATOR$5, typedArrayValues, !CORRECT_ITER_NAME);
+
+	var aTypedArray$b = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$b = arrayBufferViewCore.exportTypedArrayMethod;
+	var $join = [].join;
+
+	// `%TypedArray%.prototype.join` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.join
+	// eslint-disable-next-line no-unused-vars
+	exportTypedArrayMethod$b('join', function join(separator) {
+	  return $join.apply(aTypedArray$b(this), arguments);
+	});
+
+	var aTypedArray$c = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$c = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.lastIndexOf` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.lastindexof
+	// eslint-disable-next-line no-unused-vars
+	exportTypedArrayMethod$c('lastIndexOf', function lastIndexOf(searchElement /* , fromIndex */) {
+	  return arrayLastIndexOf.apply(aTypedArray$c(this), arguments);
+	});
+
+	var $map$1 = arrayIteration.map;
+
+
+	var aTypedArray$d = arrayBufferViewCore.aTypedArray;
+	var aTypedArrayConstructor$3 = arrayBufferViewCore.aTypedArrayConstructor;
+	var exportTypedArrayMethod$d = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.map` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.map
+	exportTypedArrayMethod$d('map', function map(mapfn /* , thisArg */) {
+	  return $map$1(aTypedArray$d(this), mapfn, arguments.length > 1 ? arguments[1] : undefined, function (O, length) {
+	    return new (aTypedArrayConstructor$3(speciesConstructor(O, O.constructor)))(length);
+	  });
+	});
+
+	var $reduce$1 = arrayReduce.left;
+
+	var aTypedArray$e = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$e = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.reduce` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reduce
+	exportTypedArrayMethod$e('reduce', function reduce(callbackfn /* , initialValue */) {
+	  return $reduce$1(aTypedArray$e(this), callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+	});
+
+	var $reduceRight = arrayReduce.right;
+
+	var aTypedArray$f = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$f = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.reduceRicht` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reduceright
+	exportTypedArrayMethod$f('reduceRight', function reduceRight(callbackfn /* , initialValue */) {
+	  return $reduceRight(aTypedArray$f(this), callbackfn, arguments.length, arguments.length > 1 ? arguments[1] : undefined);
+	});
+
+	var aTypedArray$g = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$g = arrayBufferViewCore.exportTypedArrayMethod;
+	var floor$3 = Math.floor;
+
+	// `%TypedArray%.prototype.reverse` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.reverse
+	exportTypedArrayMethod$g('reverse', function reverse() {
+	  var that = this;
+	  var length = aTypedArray$g(that).length;
+	  var middle = floor$3(length / 2);
+	  var index = 0;
+	  var value;
+	  while (index < middle) {
+	    value = that[index];
+	    that[index++] = that[--length];
+	    that[length] = value;
+	  } return that;
+	});
+
+	var aTypedArray$h = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$h = arrayBufferViewCore.exportTypedArrayMethod;
+
+	var FORCED$4 = fails(function () {
+	  // eslint-disable-next-line no-undef
+	  new Int8Array(1).set({});
+	});
+
+	// `%TypedArray%.prototype.set` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.set
+	exportTypedArrayMethod$h('set', function set(arrayLike /* , offset */) {
+	  aTypedArray$h(this);
+	  var offset = toOffset(arguments.length > 1 ? arguments[1] : undefined, 1);
+	  var length = this.length;
+	  var src = toObject(arrayLike);
+	  var len = toLength(src.length);
+	  var index = 0;
+	  if (len + offset > length) throw RangeError('Wrong length');
+	  while (index < len) this[offset + index] = src[index++];
+	}, FORCED$4);
+
+	var aTypedArray$i = arrayBufferViewCore.aTypedArray;
+	var aTypedArrayConstructor$4 = arrayBufferViewCore.aTypedArrayConstructor;
+	var exportTypedArrayMethod$i = arrayBufferViewCore.exportTypedArrayMethod;
+	var $slice = [].slice;
+
+	var FORCED$5 = fails(function () {
+	  // eslint-disable-next-line no-undef
+	  new Int8Array(1).slice();
+	});
+
+	// `%TypedArray%.prototype.slice` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.slice
+	exportTypedArrayMethod$i('slice', function slice(start, end) {
+	  var list = $slice.call(aTypedArray$i(this), start, end);
+	  var C = speciesConstructor(this, this.constructor);
+	  var index = 0;
+	  var length = list.length;
+	  var result = new (aTypedArrayConstructor$4(C))(length);
+	  while (length > index) result[index] = list[index++];
+	  return result;
+	}, FORCED$5);
+
+	var $some = arrayIteration.some;
+
+	var aTypedArray$j = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$j = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.some` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.some
+	exportTypedArrayMethod$j('some', function some(callbackfn /* , thisArg */) {
+	  return $some(aTypedArray$j(this), callbackfn, arguments.length > 1 ? arguments[1] : undefined);
+	});
+
+	var aTypedArray$k = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$k = arrayBufferViewCore.exportTypedArrayMethod;
+	var $sort = [].sort;
+
+	// `%TypedArray%.prototype.sort` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.sort
+	exportTypedArrayMethod$k('sort', function sort(comparefn) {
+	  return $sort.call(aTypedArray$k(this), comparefn);
+	});
+
+	var aTypedArray$l = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$l = arrayBufferViewCore.exportTypedArrayMethod;
+
+	// `%TypedArray%.prototype.subarray` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.subarray
+	exportTypedArrayMethod$l('subarray', function subarray(begin, end) {
+	  var O = aTypedArray$l(this);
+	  var length = O.length;
+	  var beginIndex = toAbsoluteIndex(begin, length);
+	  return new (speciesConstructor(O, O.constructor))(
+	    O.buffer,
+	    O.byteOffset + beginIndex * O.BYTES_PER_ELEMENT,
+	    toLength((end === undefined ? length : toAbsoluteIndex(end, length)) - beginIndex)
+	  );
+	});
+
+	var Int8Array$3 = global_1.Int8Array;
+	var aTypedArray$m = arrayBufferViewCore.aTypedArray;
+	var exportTypedArrayMethod$m = arrayBufferViewCore.exportTypedArrayMethod;
+	var $toLocaleString = [].toLocaleString;
+	var $slice$1 = [].slice;
+
+	// iOS Safari 6.x fails here
+	var TO_LOCALE_STRING_BUG = !!Int8Array$3 && fails(function () {
+	  $toLocaleString.call(new Int8Array$3(1));
+	});
+
+	var FORCED$6 = fails(function () {
+	  return [1, 2].toLocaleString() != new Int8Array$3([1, 2]).toLocaleString();
+	}) || !fails(function () {
+	  Int8Array$3.prototype.toLocaleString.call([1, 2]);
+	});
+
+	// `%TypedArray%.prototype.toLocaleString` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.tolocalestring
+	exportTypedArrayMethod$m('toLocaleString', function toLocaleString() {
+	  return $toLocaleString.apply(TO_LOCALE_STRING_BUG ? $slice$1.call(aTypedArray$m(this)) : aTypedArray$m(this), arguments);
+	}, FORCED$6);
+
+	var exportTypedArrayMethod$n = arrayBufferViewCore.exportTypedArrayMethod;
+
+
+
+	var Uint8Array$2 = global_1.Uint8Array;
+	var Uint8ArrayPrototype = Uint8Array$2 && Uint8Array$2.prototype || {};
+	var arrayToString = [].toString;
+	var arrayJoin = [].join;
+
+	if (fails(function () { arrayToString.call({}); })) {
+	  arrayToString = function toString() {
+	    return arrayJoin.call(this);
+	  };
+	}
+
+	var IS_NOT_ARRAY_METHOD = Uint8ArrayPrototype.toString != arrayToString;
+
+	// `%TypedArray%.prototype.toString` method
+	// https://tc39.github.io/ecma262/#sec-%typedarray%.prototype.tostring
+	exportTypedArrayMethod$n('toString', arrayToString, IS_NOT_ARRAY_METHOD);
+
+	// `URL.prototype.toJSON` method
+	// https://url.spec.whatwg.org/#dom-url-tojson
+	_export({ target: 'URL', proto: true, enumerable: true }, {
+	  toJSON: function toJSON() {
+	    return URL.prototype.toString.call(this);
+	  }
+	});
+
+	var lookup = [];
+	var revLookup = [];
+	var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array;
+	var inited = false;
+
+	function init() {
+	  inited = true;
+	  var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+	  for (var i = 0, len = code.length; i < len; ++i) {
+	    lookup[i] = code[i];
+	    revLookup[code.charCodeAt(i)] = i;
+	  }
+
+	  revLookup['-'.charCodeAt(0)] = 62;
+	  revLookup['_'.charCodeAt(0)] = 63;
+	}
+
+	function toByteArray(b64) {
+	  if (!inited) {
+	    init();
+	  }
+
+	  var i, j, l, tmp, placeHolders, arr;
+	  var len = b64.length;
+
+	  if (len % 4 > 0) {
+	    throw new Error('Invalid string. Length must be a multiple of 4');
+	  } // the number of equal signs (place holders)
+	  // if there are two placeholders, than the two characters before it
+	  // represent one byte
+	  // if there is only one, then the three characters before it represent 2 bytes
+	  // this is just a cheap hack to not do indexOf twice
+
+
+	  placeHolders = b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0; // base64 is 4/3 + up to two characters of the original data
+
+	  arr = new Arr(len * 3 / 4 - placeHolders); // if there are placeholders, only get up to the last complete 4 chars
+
+	  l = placeHolders > 0 ? len - 4 : len;
+	  var L = 0;
+
+	  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+	    tmp = revLookup[b64.charCodeAt(i)] << 18 | revLookup[b64.charCodeAt(i + 1)] << 12 | revLookup[b64.charCodeAt(i + 2)] << 6 | revLookup[b64.charCodeAt(i + 3)];
+	    arr[L++] = tmp >> 16 & 0xFF;
+	    arr[L++] = tmp >> 8 & 0xFF;
+	    arr[L++] = tmp & 0xFF;
+	  }
+
+	  if (placeHolders === 2) {
+	    tmp = revLookup[b64.charCodeAt(i)] << 2 | revLookup[b64.charCodeAt(i + 1)] >> 4;
+	    arr[L++] = tmp & 0xFF;
+	  } else if (placeHolders === 1) {
+	    tmp = revLookup[b64.charCodeAt(i)] << 10 | revLookup[b64.charCodeAt(i + 1)] << 4 | revLookup[b64.charCodeAt(i + 2)] >> 2;
+	    arr[L++] = tmp >> 8 & 0xFF;
+	    arr[L++] = tmp & 0xFF;
+	  }
+
+	  return arr;
+	}
+
+	function tripletToBase64(num) {
+	  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F];
+	}
+
+	function encodeChunk(uint8, start, end) {
+	  var tmp;
+	  var output = [];
+
+	  for (var i = start; i < end; i += 3) {
+	    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + uint8[i + 2];
+	    output.push(tripletToBase64(tmp));
+	  }
+
+	  return output.join('');
+	}
+
+	function fromByteArray(uint8) {
+	  if (!inited) {
+	    init();
+	  }
+
+	  var tmp;
+	  var len = uint8.length;
+	  var extraBytes = len % 3; // if we have 1 byte left, pad 2 bytes
+
+	  var output = '';
+	  var parts = [];
+	  var maxChunkLength = 16383; // must be multiple of 3
+	  // go through the array every three bytes, we'll deal with trailing stuff later
+
+	  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+	    parts.push(encodeChunk(uint8, i, i + maxChunkLength > len2 ? len2 : i + maxChunkLength));
+	  } // pad the end with zeros, but make sure to not forget the extra bytes
+
+
+	  if (extraBytes === 1) {
+	    tmp = uint8[len - 1];
+	    output += lookup[tmp >> 2];
+	    output += lookup[tmp << 4 & 0x3F];
+	    output += '==';
+	  } else if (extraBytes === 2) {
+	    tmp = (uint8[len - 2] << 8) + uint8[len - 1];
+	    output += lookup[tmp >> 10];
+	    output += lookup[tmp >> 4 & 0x3F];
+	    output += lookup[tmp << 2 & 0x3F];
+	    output += '=';
+	  }
+
+	  parts.push(output);
+	  return parts.join('');
+	}
+
+	function read(buffer, offset, isLE, mLen, nBytes) {
+	  var e, m;
+	  var eLen = nBytes * 8 - mLen - 1;
+	  var eMax = (1 << eLen) - 1;
+	  var eBias = eMax >> 1;
+	  var nBits = -7;
+	  var i = isLE ? nBytes - 1 : 0;
+	  var d = isLE ? -1 : 1;
+	  var s = buffer[offset + i];
+	  i += d;
+	  e = s & (1 << -nBits) - 1;
+	  s >>= -nBits;
+	  nBits += eLen;
+
+	  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+	  m = e & (1 << -nBits) - 1;
+	  e >>= -nBits;
+	  nBits += mLen;
+
+	  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+	  if (e === 0) {
+	    e = 1 - eBias;
+	  } else if (e === eMax) {
+	    return m ? NaN : (s ? -1 : 1) * Infinity;
+	  } else {
+	    m = m + Math.pow(2, mLen);
+	    e = e - eBias;
+	  }
+
+	  return (s ? -1 : 1) * m * Math.pow(2, e - mLen);
+	}
+	function write(buffer, value, offset, isLE, mLen, nBytes) {
+	  var e, m, c;
+	  var eLen = nBytes * 8 - mLen - 1;
+	  var eMax = (1 << eLen) - 1;
+	  var eBias = eMax >> 1;
+	  var rt = mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0;
+	  var i = isLE ? 0 : nBytes - 1;
+	  var d = isLE ? 1 : -1;
+	  var s = value < 0 || value === 0 && 1 / value < 0 ? 1 : 0;
+	  value = Math.abs(value);
+
+	  if (isNaN(value) || value === Infinity) {
+	    m = isNaN(value) ? 1 : 0;
+	    e = eMax;
+	  } else {
+	    e = Math.floor(Math.log(value) / Math.LN2);
+
+	    if (value * (c = Math.pow(2, -e)) < 1) {
+	      e--;
+	      c *= 2;
+	    }
+
+	    if (e + eBias >= 1) {
+	      value += rt / c;
+	    } else {
+	      value += rt * Math.pow(2, 1 - eBias);
+	    }
+
+	    if (value * c >= 2) {
+	      e++;
+	      c /= 2;
+	    }
+
+	    if (e + eBias >= eMax) {
+	      m = 0;
+	      e = eMax;
+	    } else if (e + eBias >= 1) {
+	      m = (value * c - 1) * Math.pow(2, mLen);
+	      e = e + eBias;
+	    } else {
+	      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
+	      e = 0;
+	    }
+	  }
+
+	  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+	  e = e << mLen | m;
+	  eLen += mLen;
+
+	  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+	  buffer[offset + i - d] |= s * 128;
+	}
+
+	var toString$2 = {}.toString;
+	var isArray$1 = Array.isArray || function (arr) {
+	  return toString$2.call(arr) == '[object Array]';
+	};
+
+	var INSPECT_MAX_BYTES = 50;
+	/**
+	 * If `Buffer.TYPED_ARRAY_SUPPORT`:
+	 *   === true    Use Uint8Array implementation (fastest)
+	 *   === false   Use Object implementation (most compatible, even IE6)
+	 *
+	 * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+	 * Opera 11.6+, iOS 4.2+.
+	 *
+	 * Due to various browser bugs, sometimes the Object implementation will be used even
+	 * when the browser supports typed arrays.
+	 *
+	 * Note:
+	 *
+	 *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+	 *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+	 *
+	 *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+	 *
+	 *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+	 *     incorrect length in some situations.
+
+	 * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+	 * get the Object implementation, which is slower but behaves correctly.
+	 */
+
+	Buffer.TYPED_ARRAY_SUPPORT = global$1.TYPED_ARRAY_SUPPORT !== undefined ? global$1.TYPED_ARRAY_SUPPORT : true;
+
+	function kMaxLength() {
+	  return Buffer.TYPED_ARRAY_SUPPORT ? 0x7fffffff : 0x3fffffff;
+	}
+
+	function createBuffer(that, length) {
+	  if (kMaxLength() < length) {
+	    throw new RangeError('Invalid typed array length');
+	  }
+
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    // Return an augmented `Uint8Array` instance, for best performance
+	    that = new Uint8Array(length);
+	    that.__proto__ = Buffer.prototype;
+	  } else {
+	    // Fallback: Return an object instance of the Buffer class
+	    if (that === null) {
+	      that = new Buffer(length);
+	    }
+
+	    that.length = length;
+	  }
+
+	  return that;
+	}
+	/**
+	 * The Buffer constructor returns instances of `Uint8Array` that have their
+	 * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+	 * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+	 * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+	 * returns a single octet.
+	 *
+	 * The `Uint8Array` prototype remains unmodified.
+	 */
+
+
+	function Buffer(arg, encodingOrOffset, length) {
+	  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+	    return new Buffer(arg, encodingOrOffset, length);
+	  } // Common case.
+
+
+	  if (typeof arg === 'number') {
+	    if (typeof encodingOrOffset === 'string') {
+	      throw new Error('If encoding is specified then the first argument must be a string');
+	    }
+
+	    return allocUnsafe(this, arg);
+	  }
+
+	  return from(this, arg, encodingOrOffset, length);
+	}
+	Buffer.poolSize = 8192; // not used by this implementation
+	// TODO: Legacy, not needed anymore. Remove in next major version.
+
+	Buffer._augment = function (arr) {
+	  arr.__proto__ = Buffer.prototype;
+	  return arr;
+	};
+
+	function from(that, value, encodingOrOffset, length) {
+	  if (typeof value === 'number') {
+	    throw new TypeError('"value" argument must not be a number');
+	  }
+
+	  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+	    return fromArrayBuffer(that, value, encodingOrOffset, length);
+	  }
+
+	  if (typeof value === 'string') {
+	    return fromString(that, value, encodingOrOffset);
+	  }
+
+	  return fromObject(that, value);
+	}
+	/**
+	 * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+	 * if value is a number.
+	 * Buffer.from(str[, encoding])
+	 * Buffer.from(array)
+	 * Buffer.from(buffer)
+	 * Buffer.from(arrayBuffer[, byteOffset[, length]])
+	 **/
+
+
+	Buffer.from = function (value, encodingOrOffset, length) {
+	  return from(null, value, encodingOrOffset, length);
+	};
+
+	if (Buffer.TYPED_ARRAY_SUPPORT) {
+	  Buffer.prototype.__proto__ = Uint8Array.prototype;
+	  Buffer.__proto__ = Uint8Array;
+	}
+
+	function assertSize(size) {
+	  if (typeof size !== 'number') {
+	    throw new TypeError('"size" argument must be a number');
+	  } else if (size < 0) {
+	    throw new RangeError('"size" argument must not be negative');
+	  }
+	}
+
+	function alloc(that, size, fill, encoding) {
+	  assertSize(size);
+
+	  if (size <= 0) {
+	    return createBuffer(that, size);
+	  }
+
+	  if (fill !== undefined) {
+	    // Only pay attention to encoding if it's a string. This
+	    // prevents accidentally sending in a number that would
+	    // be interpretted as a start offset.
+	    return typeof encoding === 'string' ? createBuffer(that, size).fill(fill, encoding) : createBuffer(that, size).fill(fill);
+	  }
+
+	  return createBuffer(that, size);
+	}
+	/**
+	 * Creates a new filled Buffer instance.
+	 * alloc(size[, fill[, encoding]])
+	 **/
+
+
+	Buffer.alloc = function (size, fill, encoding) {
+	  return alloc(null, size, fill, encoding);
+	};
+
+	function allocUnsafe(that, size) {
+	  assertSize(size);
+	  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0);
+
+	  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+	    for (var i = 0; i < size; ++i) {
+	      that[i] = 0;
+	    }
+	  }
+
+	  return that;
+	}
+	/**
+	 * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+	 * */
+
+
+	Buffer.allocUnsafe = function (size) {
+	  return allocUnsafe(null, size);
+	};
+	/**
+	 * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+	 */
+
+
+	Buffer.allocUnsafeSlow = function (size) {
+	  return allocUnsafe(null, size);
+	};
+
+	function fromString(that, string, encoding) {
+	  if (typeof encoding !== 'string' || encoding === '') {
+	    encoding = 'utf8';
+	  }
+
+	  if (!Buffer.isEncoding(encoding)) {
+	    throw new TypeError('"encoding" must be a valid string encoding');
+	  }
+
+	  var length = byteLength(string, encoding) | 0;
+	  that = createBuffer(that, length);
+	  var actual = that.write(string, encoding);
+
+	  if (actual !== length) {
+	    // Writing a hex string, for example, that contains invalid characters will
+	    // cause everything after the first invalid character to be ignored. (e.g.
+	    // 'abxxcd' will be treated as 'ab')
+	    that = that.slice(0, actual);
+	  }
+
+	  return that;
+	}
+
+	function fromArrayLike(that, array) {
+	  var length = array.length < 0 ? 0 : checked(array.length) | 0;
+	  that = createBuffer(that, length);
+
+	  for (var i = 0; i < length; i += 1) {
+	    that[i] = array[i] & 255;
+	  }
+
+	  return that;
+	}
+
+	function fromArrayBuffer(that, array, byteOffset, length) {
+	  array.byteLength; // this throws if `array` is not a valid ArrayBuffer
+
+	  if (byteOffset < 0 || array.byteLength < byteOffset) {
+	    throw new RangeError('\'offset\' is out of bounds');
+	  }
+
+	  if (array.byteLength < byteOffset + (length || 0)) {
+	    throw new RangeError('\'length\' is out of bounds');
+	  }
+
+	  if (byteOffset === undefined && length === undefined) {
+	    array = new Uint8Array(array);
+	  } else if (length === undefined) {
+	    array = new Uint8Array(array, byteOffset);
+	  } else {
+	    array = new Uint8Array(array, byteOffset, length);
+	  }
+
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    // Return an augmented `Uint8Array` instance, for best performance
+	    that = array;
+	    that.__proto__ = Buffer.prototype;
+	  } else {
+	    // Fallback: Return an object instance of the Buffer class
+	    that = fromArrayLike(that, array);
+	  }
+
+	  return that;
+	}
+
+	function fromObject(that, obj) {
+	  if (internalIsBuffer(obj)) {
+	    var len = checked(obj.length) | 0;
+	    that = createBuffer(that, len);
+
+	    if (that.length === 0) {
+	      return that;
+	    }
+
+	    obj.copy(that, 0, 0, len);
+	    return that;
+	  }
+
+	  if (obj) {
+	    if (typeof ArrayBuffer !== 'undefined' && obj.buffer instanceof ArrayBuffer || 'length' in obj) {
+	      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+	        return createBuffer(that, 0);
+	      }
+
+	      return fromArrayLike(that, obj);
+	    }
+
+	    if (obj.type === 'Buffer' && isArray$1(obj.data)) {
+	      return fromArrayLike(that, obj.data);
+	    }
+	  }
+
+	  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.');
+	}
+
+	function checked(length) {
+	  // Note: cannot use `length < kMaxLength()` here because that fails when
+	  // length is NaN (which is otherwise coerced to zero.)
+	  if (length >= kMaxLength()) {
+	    throw new RangeError('Attempt to allocate Buffer larger than maximum ' + 'size: 0x' + kMaxLength().toString(16) + ' bytes');
+	  }
+
+	  return length | 0;
+	}
+	Buffer.isBuffer = isBuffer;
+
+	function internalIsBuffer(b) {
+	  return !!(b != null && b._isBuffer);
+	}
+
+	Buffer.compare = function compare(a, b) {
+	  if (!internalIsBuffer(a) || !internalIsBuffer(b)) {
+	    throw new TypeError('Arguments must be Buffers');
+	  }
+
+	  if (a === b) return 0;
+	  var x = a.length;
+	  var y = b.length;
+
+	  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+	    if (a[i] !== b[i]) {
+	      x = a[i];
+	      y = b[i];
+	      break;
+	    }
+	  }
+
+	  if (x < y) return -1;
+	  if (y < x) return 1;
+	  return 0;
+	};
+
+	Buffer.isEncoding = function isEncoding(encoding) {
+	  switch (String(encoding).toLowerCase()) {
+	    case 'hex':
+	    case 'utf8':
+	    case 'utf-8':
+	    case 'ascii':
+	    case 'latin1':
+	    case 'binary':
+	    case 'base64':
+	    case 'ucs2':
+	    case 'ucs-2':
+	    case 'utf16le':
+	    case 'utf-16le':
+	      return true;
+
+	    default:
+	      return false;
+	  }
+	};
+
+	Buffer.concat = function concat(list, length) {
+	  if (!isArray$1(list)) {
+	    throw new TypeError('"list" argument must be an Array of Buffers');
+	  }
+
+	  if (list.length === 0) {
+	    return Buffer.alloc(0);
+	  }
+
+	  var i;
+
+	  if (length === undefined) {
+	    length = 0;
+
+	    for (i = 0; i < list.length; ++i) {
+	      length += list[i].length;
+	    }
+	  }
+
+	  var buffer = Buffer.allocUnsafe(length);
+	  var pos = 0;
+
+	  for (i = 0; i < list.length; ++i) {
+	    var buf = list[i];
+
+	    if (!internalIsBuffer(buf)) {
+	      throw new TypeError('"list" argument must be an Array of Buffers');
+	    }
+
+	    buf.copy(buffer, pos);
+	    pos += buf.length;
+	  }
+
+	  return buffer;
+	};
+
+	function byteLength(string, encoding) {
+	  if (internalIsBuffer(string)) {
+	    return string.length;
+	  }
+
+	  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' && (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+	    return string.byteLength;
+	  }
+
+	  if (typeof string !== 'string') {
+	    string = '' + string;
+	  }
+
+	  var len = string.length;
+	  if (len === 0) return 0; // Use a for loop to avoid recursion
+
+	  var loweredCase = false;
+
+	  for (;;) {
+	    switch (encoding) {
+	      case 'ascii':
+	      case 'latin1':
+	      case 'binary':
+	        return len;
+
+	      case 'utf8':
+	      case 'utf-8':
+	      case undefined:
+	        return utf8ToBytes(string).length;
+
+	      case 'ucs2':
+	      case 'ucs-2':
+	      case 'utf16le':
+	      case 'utf-16le':
+	        return len * 2;
+
+	      case 'hex':
+	        return len >>> 1;
+
+	      case 'base64':
+	        return base64ToBytes(string).length;
+
+	      default:
+	        if (loweredCase) return utf8ToBytes(string).length; // assume utf8
+
+	        encoding = ('' + encoding).toLowerCase();
+	        loweredCase = true;
+	    }
+	  }
+	}
+
+	Buffer.byteLength = byteLength;
+
+	function slowToString(encoding, start, end) {
+	  var loweredCase = false; // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+	  // property of a typed array.
+	  // This behaves neither like String nor Uint8A

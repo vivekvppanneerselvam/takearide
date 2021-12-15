@@ -1,0 +1,104 @@
+olvedStaticSymbol(staticSymbol, summary.metadata) : null;
+    }
+    /**
+     * getStaticSymbol produces a Type whose metadata is known but whose implementation is not loaded.
+     * All types passed to the StaticResolver should be pseudo-types returned by this method.
+     *
+     * @param declarationFile the absolute path of the file where the symbol is declared
+     * @param name the name of the type.
+     * @param members a symbol for a static member of the named type
+     */
+    getStaticSymbol(declarationFile, name, members) {
+        return this.staticSymbolCache.get(declarationFile, name, members);
+    }
+    /**
+     * hasDecorators checks a file's metadata for the presence of decorators without evaluating the
+     * metadata.
+     *
+     * @param filePath the absolute path to examine for decorators.
+     * @returns true if any class in the file has a decorator.
+     */
+    hasDecorators(filePath) {
+        const metadata = this.getModuleMetadata(filePath);
+        if (metadata['metadata']) {
+            return Object.keys(metadata['metadata']).some((metadataKey) => {
+                const entry = metadata['metadata'][metadataKey];
+                return entry && entry.__symbolic === 'class' && entry.decorators;
+            });
+        }
+        return false;
+    }
+    getSymbolsOf(filePath) {
+        const summarySymbols = this.summaryResolver.getSymbolsOf(filePath);
+        if (summarySymbols) {
+            return summarySymbols;
+        }
+        // Note: Some users use libraries that were not compiled with ngc, i.e. they don't
+        // have summaries, only .d.ts files, but `summaryResolver.isLibraryFile` returns true.
+        this._createSymbolsOf(filePath);
+        const metadataSymbols = [];
+        this.resolvedSymbols.forEach((resolvedSymbol) => {
+            if (resolvedSymbol.symbol.filePath === filePath) {
+                metadataSymbols.push(resolvedSymbol.symbol);
+            }
+        });
+        return metadataSymbols;
+    }
+    _createSymbolsOf(filePath) {
+        if (this.resolvedFilePaths.has(filePath)) {
+            return;
+        }
+        this.resolvedFilePaths.add(filePath);
+        const resolvedSymbols = [];
+        const metadata = this.getModuleMetadata(filePath);
+        if (metadata['importAs']) {
+            // Index bundle indices should use the importAs module name defined
+            // in the bundle.
+            this.knownFileNameToModuleNames.set(filePath, metadata['importAs']);
+        }
+        // handle the symbols in one of the re-export location
+        if (metadata['exports']) {
+            for (const moduleExport of metadata['exports']) {
+                // handle the symbols in the list of explicitly re-exported symbols.
+                if (moduleExport.export) {
+                    moduleExport.export.forEach((exportSymbol) => {
+                        let symbolName;
+                        if (typeof exportSymbol === 'string') {
+                            symbolName = exportSymbol;
+                        }
+                        else {
+                            symbolName = exportSymbol.as;
+                        }
+                        symbolName = unescapeIdentifier(symbolName);
+                        let symName = symbolName;
+                        if (typeof exportSymbol !== 'string') {
+                            symName = unescapeIdentifier(exportSymbol.name);
+                        }
+                        const resolvedModule = this.resolveModule(moduleExport.from, filePath);
+                        if (resolvedModule) {
+                            const targetSymbol = this.getStaticSymbol(resolvedModule, symName);
+                            const sourceSymbol = this.getStaticSymbol(filePath, symbolName);
+                            resolvedSymbols.push(this.createExport(sourceSymbol, targetSymbol));
+                        }
+                    });
+                }
+                else {
+                    // handle the symbols via export * directives.
+                    const resolvedModule = this.resolveModule(moduleExport.from, filePath);
+                    if (resolvedModule) {
+                        const nestedExports = this.getSymbolsOf(resolvedModule);
+                        nestedExports.forEach((targetSymbol) => {
+                            const sourceSymbol = this.getStaticSymbol(filePath, targetSymbol.name);
+                            resolvedSymbols.push(this.createExport(sourceSymbol, targetSymbol));
+                        });
+                    }
+                }
+            }
+        }
+        // handle the actual metadata. Has to be after the exports
+        // as there might be collisions in the names, and we want the symbols
+        // of the current module to win ofter reexports.
+        if (metadata['metadata']) {
+            // handle direct declarations of the symbol
+            const topLevelSymbolNames = new Set(Object.keys(metadata['metadata']).map(unescapeIdentifier));
+            const

@@ -1,0 +1,35 @@
+.
+     * @return {?}
+     */
+    toggle() {
+        if (this.isOpen()) {
+            this.close();
+        }
+        else {
+            this.open();
+        }
+    }
+    /**
+     * @param {?} event
+     * @return {?}
+     */
+    _shouldCloseFromClick(event) {
+        if (event.button !== 2 && !this._isEventFromToggle(event)) {
+            if (this.autoClose === true) {
+                return true;
+            }
+            else if (this.autoClose === 'inside' && this._isEventFromMenu(event)) {
+                return true;
+            }
+            else if (this.autoClose === 'outside' && !this._isEventFromMenu(event)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    /**
+     * @return {?}
+     */
+    ngOnDestroy() {
+        this._closed$.next();
+   

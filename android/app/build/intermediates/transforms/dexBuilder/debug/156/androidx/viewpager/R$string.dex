@@ -1,0 +1,25 @@
+xt.strategy)));
+        }
+        return call_1.callRule(ruleYes, rxjs_1.of(yes), context)
+            .pipe(operators_1.concatMap(yesTree => {
+            return call_1.callRule(ruleNo, rxjs_1.of(no), context)
+                .pipe(operators_1.map(noTree => static_1.merge(yesTree, noTree, context.strategy)));
+        }));
+    };
+}
+exports.partitionApplyMerge = partitionApplyMerge;
+function forEach(operator) {
+    return (tree) => {
+        tree.visit((path, entry) => {
+            if (!entry) {
+                return;
+            }
+            const newEntry = operator(entry);
+            if (newEntry === entry) {
+                return;
+            }
+            if (newEntry === null) {
+                tree.delete(path);
+                return;
+            }
+            if (newEn

@@ -1,0 +1,16 @@
+;
+}
+
+interface AudioBufferSourceNode extends AudioNode {
+    buffer: AudioBuffer | null;
+    readonly detune: AudioParam;
+    loop: boolean;
+    loopEnd: number;
+    loopStart: number;
+    onended: (this: AudioBufferSourceNode, ev: MediaStreamErrorEvent) => any;
+    readonly playbackRate: AudioParam;
+    start(when?: number, offset?: number, duration?: number): void;
+    stop(when?: number): void;
+    addEventListener<K extends keyof AudioBufferSourceNodeEventMap>(type: K, listener: (this: AudioBufferSourceNode, ev: AudioBufferSourceNodeEventMap[K]) => any, options?: boolean | AddEventListenerOptions): void;
+    addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+   

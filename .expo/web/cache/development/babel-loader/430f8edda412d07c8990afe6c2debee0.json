@@ -1,0 +1,59 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.rewriteModuleStatementsAndPrepareHeader = rewriteModuleStatementsAndPrepareHeader;
+exports.ensureStatementsHoisted = ensureStatementsHoisted;
+exports.wrapInterop = wrapInterop;
+exports.buildNamespaceInitStatements = buildNamespaceInitStatements;
+Object.defineProperty(exports, "isModule", {
+  enumerable: true,
+  get: function () {
+    return _helperModuleImports.isModule;
+  }
+});
+Object.defineProperty(exports, "rewriteThis", {
+  enumerable: true,
+  get: function () {
+    return _rewriteThis.default;
+  }
+});
+Object.defineProperty(exports, "hasExports", {
+  enumerable: true,
+  get: function () {
+    return _normalizeAndLoadMetadata.hasExports;
+  }
+});
+Object.defineProperty(exports, "isSideEffectImport", {
+  enumerable: true,
+  get: function () {
+    return _normalizeAndLoadMetadata.isSideEffectImport;
+  }
+});
+Object.defineProperty(exports, "getModuleName", {
+  enumerable: true,
+  get: function () {
+    return _getModuleName.default;
+  }
+});
+
+var _assert = _interopRequireDefault(require("assert"));
+
+var t = _interopRequireWildcard(require("@babel/types"));
+
+var _template = _interopRequireDefault(require("@babel/template"));
+
+var _chunk = _interopRequireDefault(require("lodash/chunk"));
+
+var _helperModuleImports = require("@babel/helper-module-imports");
+
+var _rewriteThis = _interopRequireDefault(require("./rewrite-this"));
+
+var _rewriteLiveReferences = _interopRequireDefault(require("./rewrite-live-references"));
+
+var _normalizeAndLoadMetadata = _interopRequireWildcard(require("./normalize-and-load-metadata"));
+
+var _getModuleName = _interopRequireDefault(require("./get-module-name"));
+
+function _getReq

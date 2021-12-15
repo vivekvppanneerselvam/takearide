@@ -1,0 +1,57 @@
+` One or more glob patterns to use for matching.
+ * @param {Object} `options` See available [options](#options) for changing how matches are performed
+ * @return {Object} Returns an object with only keys that match the given patterns.
+ * @api public
+ */
+
+nanomatch.matchKeys = function(obj, patterns, options) {
+  if (!utils.isObject(obj)) {
+    throw new TypeError('expected the first argument to be an object');
+  }
+  var keys = nanomatch(Object.keys(obj), patterns, options);
+  return utils.pick(obj, keys);
+};
+
+/**
+ * Returns a memoized matcher function from the given glob `pattern` and `options`.
+ * The returned function takes a string to match as its only argument and returns
+ * true if the string is a match.
+ *
+ * ```js
+ * var nm = require('nanomatch');
+ * nm.matcher(pattern[, options]);
+ *
+ * var isMatch = nm.matcher('*.!(*a)');
+ * console.log(isMatch('a.a'));
+ * //=> false
+ * console.log(isMatch('a.b'));
+ * //=> true
+ * ```
+ * @param {String} `pattern` Glob pattern
+ * @param {Object} `options` See available [options](#options) for changing how matches are performed.
+ * @return {Function} Returns a matcher function.
+ * @api public
+ */
+
+nanomatch.matcher = function matcher(pattern, options) {
+  if (utils.isEmptyString(pattern)) {
+    return function() {
+      return false;
+    };
+  }
+
+  if (Array.isArray(pattern)) {
+    return compose(pattern, options, matcher);
+  }
+
+  // if pattern is a regex
+  if (pattern instanceof RegExp) {
+    return test(pattern);
+  }
+
+  // if pattern is invalid
+  if (!utils.isString(pattern)) {
+    throw new TypeError('expected pattern to be an array, string or regex');
+  }
+
+  // if pattern is a 

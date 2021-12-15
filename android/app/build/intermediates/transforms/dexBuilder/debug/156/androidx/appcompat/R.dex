@@ -1,0 +1,29 @@
+/**
+ * @license
+ * Copyright Google Inc. All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://angular.io/license
+ */
+import * as tslib_1 from "tslib";
+import { NgZone, ɵglobal as global } from '@angular/core';
+import { ɵgetDOM as getDOM } from '@angular/platform-browser';
+export var browserDetection;
+var BrowserDetection = /** @class */ (function () {
+    function BrowserDetection(ua) {
+        this._overrideUa = ua;
+    }
+    Object.defineProperty(BrowserDetection.prototype, "_ua", {
+        get: function () {
+            if (typeof this._overrideUa === 'string') {
+                return this._overrideUa;
+            }
+            return getDOM() ? getDOM().getUserAgent() : '';
+        },
+        enumerable: true,
+        configurable: true
+    });
+    BrowserDetection.setup = function () { browserDetection = new BrowserDetection(null); };
+    Object.defineProperty(BrowserDetection.prototype, "isFirefox", {
+        get: function () { return this._ua.indexOf('Firefox') > -1; },
+        enumerable:

@@ -1,0 +1,43 @@
+umber} msecs - Slowness threshold value.
+	   * @return {Mocha} this
+	   * @chainable
+	   * @example
+	   *
+	   * // Sets "slow" threshold to half a second
+	   * mocha.slow(500);
+	   * @example
+	   *
+	   * // Same as above but using string argument
+	   * mocha.slow('0.5s');
+	   */
+
+
+	  Mocha.prototype.slow = function (msecs) {
+	    this.suite.slow(msecs);
+	    return this;
+	  };
+	  /**
+	   * Forces all tests to either accept a `done` callback or return a promise.
+	   *
+	   * @public
+	   * @see [CLI option](../#-async-only-a)
+	   * @param {boolean} [asyncOnly=true] - Whether to force `done` callback or promise.
+	   * @return {Mocha} this
+	   * @chainable
+	   */
+
+
+	  Mocha.prototype.asyncOnly = function (asyncOnly) {
+	    this.options.asyncOnly = asyncOnly !== false;
+	    return this;
+	  };
+	  /**
+	   * Disables syntax highlighting (in browser).
+	   *
+	   * @public
+	   * @return {Mocha} this
+	   * @chainable
+	   */
+
+
+	  Mocha.prototype.no

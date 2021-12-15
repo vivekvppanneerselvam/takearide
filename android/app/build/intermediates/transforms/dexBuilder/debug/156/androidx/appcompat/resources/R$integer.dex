@@ -1,0 +1,22 @@
+           null;
+        }
+        let result = (useSummaries && this.summaryResolver.getImportAs(staticSymbol)) || null;
+        if (!result) {
+            result = this.importAs.get(staticSymbol);
+        }
+        return result;
+    }
+    /**
+     * getResourcePath produces the path to the original location of the symbol and should
+     * be used to determine the relative location of resource references recorded in
+     * symbol metadata.
+     */
+    getResourcePath(staticSymbol) {
+        return this.symbolResourcePaths.get(staticSymbol) || staticSymbol.filePath;
+    }
+    /**
+     * getTypeArity returns the number of generic type parameters the given symbol
+     * has. If the symbol is not a type the result is null.
+     */
+    getTypeArity(staticSymbol) {
+        // If the file is a factory/ngsummar

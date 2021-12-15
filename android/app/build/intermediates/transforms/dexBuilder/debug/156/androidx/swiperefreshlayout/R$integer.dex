@@ -1,0 +1,24 @@
+// Thanks @mathiasbynens
+// http://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
+
+"use strict";
+
+var setPrototypeOf = require("es5-ext/object/set-prototype-of")
+  , d              = require("d")
+  , Symbol         = require("es6-symbol")
+  , Iterator       = require("./");
+
+var defineProperty = Object.defineProperty, StringIterator;
+
+StringIterator = module.exports = function (str) {
+	if (!(this instanceof StringIterator)) throw new TypeError("Constructor requires 'new'");
+	str = String(str);
+	Iterator.call(this, str);
+	defineProperty(this, "__length__", d("", str.length));
+};
+if (setPrototypeOf) setPrototypeOf(StringIterator, Iterator);
+
+// Internal %ArrayIteratorPrototype% doesn't expose its constructor
+delete StringIterator.prototype.constructor;
+
+StringIterator.prototype = Objec

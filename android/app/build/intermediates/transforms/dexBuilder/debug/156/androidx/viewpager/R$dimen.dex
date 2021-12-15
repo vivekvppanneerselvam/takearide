@@ -1,0 +1,69 @@
+
+				newline();
+			}
+			if (module.usedExports !== undefined) {
+				if (module.usedExports !== true) {
+					colors.normal(prefix);
+					if (module.usedExports === null) {
+						colors.cyan("[used exports unknown]");
+					} else if (module.usedExports === false) {
+						colors.cyan("[no exports used]");
+					} else if (
+						Array.isArray(module.usedExports) &&
+						module.usedExports.length === 0
+					) {
+						colors.cyan("[no exports used]");
+					} else if (Array.isArray(module.usedExports)) {
+						const providedExportsCount = Array.isArray(module.providedExports)
+							? module.providedExports.length
+							: null;
+						if (
+							providedExportsCount !== null &&
+							providedExportsCount === module.usedExports.length
+						) {
+							colors.cyan("[all exports used]");
+						} else {
+							colors.cyan(
+								`[only some exports used: ${module.usedExports.join(", ")}]`
+							);
+						}
+					}
+					newline();
+				}
+			}
+			if (Array.isArray(module.optimizationBailout)) {
+				for (const item of module.optimizationBailout) {
+					colors.normal(prefix);
+					colors.yellow(item);
+					newline();
+				}
+			}
+			if (module.reasons) {
+				for (const reason of module.reasons) {
+					colors.normal(prefix);
+					if (reason.type) {
+						colors.normal(reason.type);
+						colors.normal(" ");
+					}
+					if (reason.userRequest) {
+						colors.cyan(reason.userRequest);
+						colors.normal(" ");
+					}
+					if (reason.moduleId !== null) {
+						colors.normal("[");
+						colors.normal(reason.moduleId);
+						colors.normal("]");
+					}
+					if (reason.module && reason.module !== reason.moduleId) {
+						colors.normal(" ");
+						colors.magenta(reason.module);
+					}
+					if (reason.loc) {
+						colors.normal(" ");
+						colors.normal(reason.loc);
+					}
+					newline();
+				}
+			}
+			if (module.profile) {
+				colors.normal(prefix);

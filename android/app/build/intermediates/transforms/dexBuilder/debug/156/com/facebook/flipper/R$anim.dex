@@ -1,0 +1,51 @@
+/ex/x/y', 'ftp://ex/x/q/r'],
+  ['', 'file:/ex/x/y', 'file:/ex/x/y'],
+  ['', 'file:/ex/x/y/', 'file:/ex/x/y/'],
+  ['', 'file:/ex/x/y/pdq', 'file:/ex/x/y/pdq'],
+  ['z/', 'file:/ex/x/y/', 'file:/ex/x/y/z/'],
+  ['file://meetings.example.com/cal#m1',
+   'file:/devel/WWW/2000/10/swap/test/reluri-1.n3',
+   'file://meetings.example.com/cal#m1'],
+  ['file://meetings.example.com/cal#m1',
+   'file:/home/connolly/w3ccvs/WWW/2000/10/swap/test/reluri-1.n3',
+   'file://meetings.example.com/cal#m1'],
+  ['./#blort', 'file:/some/dir/foo', 'file:/some/dir/#blort'],
+  ['./#', 'file:/some/dir/foo', 'file:/some/dir/#'],
+  // Ryan Lee
+  ['./', 'http://example/x/abc.efg', 'http://example/x/'],
+
+
+  // Graham Klyne's tests
+  // http://www.ninebynine.org/Software/HaskellUtils/Network/UriTest.xls
+  // 01-31 are from Connelly's cases
+
+  // 32-49
+  ['./q:r', 'http://ex/x/y', 'http://ex/x/q:r'],
+  ['./p=q:r', 'http://ex/x/y', 'http://ex/x/p=q:r'],
+  ['?pp/rr', 'http://ex/x/y?pp/qq', 'http://ex/x/y?pp/rr'],
+  ['y/z', 'http://ex/x/y?pp/qq', 'http://ex/x/y/z'],
+  ['local/qual@domain.org#frag',
+   'mailto:local',
+   'mailto:local/qual@domain.org#frag'],
+  ['more/qual2@domain2.org#frag',
+   'mailto:local/qual1@domain1.org',
+   'mailto:local/more/qual2@domain2.org#frag'],
+  ['y?q', 'http://ex/x/y?q', 'http://ex/x/y?q'],
+  ['/x/y?q', 'http://ex?p', 'http://ex/x/y?q'],
+  ['c/d', 'foo:a/b', 'foo:a/c/d'],
+  ['/c/d', 'foo:a/b', 'foo:/c/d'],
+  ['', 'foo:a/b?c#d', 'foo:a/b?c'],
+  ['b/c', 'foo:a', 'foo:b/c'],
+  ['../b/c', 'foo:/a/y/z', 'foo:/a/b/c'],
+  ['./b/c', 'foo:a', 'foo:b/c'],
+  ['/./b/c', 'foo:a', 'foo:/b/c'],
+  ['../../d', 'foo://a//b/c', 'foo://a/d'],
+  ['.', 'foo:a', 'foo:'],
+  ['..', 'foo:a', 'foo:'],
+
+  // 50-57[cf. TimBL comments --
+  //  http://lists.w3.org/Archives/Public/uri/2003Feb/0028.html,
+  //  http://lists.w3.org/Archives/Public/uri/2003Jan/0008.html)
+  ['abc', 'http://example/x/y%2Fz', 'http://example/x/abc'],
+  ['../../x%2Fabc', 'http://example/a/x/y/z', 'http://example/a/x%2Fabc'],
+  ['../

@@ -1,0 +1,38 @@
+/**
+ * @fileoverview added by tsickle
+ * @suppress {checkTypes,extraRequire,uselessCode} checked by tsc
+ */
+import { forwardRef, Inject, Directive, Input, Output, EventEmitter, ElementRef, ContentChild, NgZone, Renderer2, ChangeDetectorRef } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { fromEvent, race, Subject } from 'rxjs';
+import { filter, takeUntil } from 'rxjs/operators';
+import { NgbDropdownConfig } from './dropdown-config';
+import { positionElements } from '../util/positioning';
+import { Key } from '../util/key';
+/**
+ *
+ */
+export class NgbDropdownMenu {
+    /**
+     * @param {?} dropdown
+     * @param {?} _elementRef
+     * @param {?} _renderer
+     */
+    constructor(dropdown, _elementRef, _renderer) {
+        this.dropdown = dropdown;
+        this._elementRef = _elementRef;
+        this._renderer = _renderer;
+        this.placement = 'bottom';
+        this.isOpen = false;
+    }
+    /**
+     * @param {?} $event
+     * @return {?}
+     */
+    isEventFrom($event) { return this._elementRef.nativeElement.contains($event.target); }
+    /**
+     * @param {?} triggerEl
+     * @param {?} placement
+     * @return {?}
+     */
+    position

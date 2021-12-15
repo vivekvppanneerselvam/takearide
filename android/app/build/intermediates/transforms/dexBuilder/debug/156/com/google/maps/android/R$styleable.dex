@@ -1,0 +1,53 @@
+
+                    if (md && md['version'] > maxVersion) {
+                        maxVersion = md['version'];
+                        moduleMetadata = md;
+                    }
+                });
+            }
+            if (!moduleMetadata) {
+                moduleMetadata =
+                    { __symbolic: 'module', version: SUPPORTED_SCHEMA_VERSION, module: module, metadata: {} };
+            }
+            if (moduleMetadata['version'] != SUPPORTED_SCHEMA_VERSION) {
+                const errorMessage = moduleMetadata['version'] == 2 ?
+                    `Unsupported metadata version ${moduleMetadata['version']} for module ${module}. This module should be compiled with a newer version of ngc` :
+                    `Metadata version mismatch for module ${module}, found version ${moduleMetadata['version']}, expected ${SUPPORTED_SCHEMA_VERSION}`;
+                this.reportError(new Error(errorMessage));
+            }
+            this.metadataCache.set(module, moduleMetadata);
+        }
+        return moduleMetadata;
+    }
+    getSymbolByModule(module, symbolName, containingFile) {
+        const filePath = this.resolveModule(module, containingFile);
+        if (!filePath) {
+            this.reportError(new Error(`Could not resolve module ${module}${containingFile ? ' relative to ' +
+                containingFile : ''}`));
+            return this.getStaticSymbol(`ERROR:${module}`, symbolName);
+        }
+        return this.getStaticSymbol(filePath, symbolName);
+    }
+    resolveModule(module, containingFile) {
+        try {
+            return this.host.moduleNameToFileName(module, containingFile);
+        }
+        catch (e) {
+            console.error(`Could not resolve module '${module}' relative to file ${containingFile}`);
+            this.reportError(e, undefined, containingFile);
+        }
+        return null;
+    }
+}
+// Remove extra underscore from escaped identifier.
+// See https://github.com/Microsoft/TypeScript/blob/master/src/compiler/utilities.ts
+export function unescapeIdentifier(identifier) {
+    return identifier.startsWith('___') ? identifier.substr(1) : identifier;
+}
+export function unwrapResolvedMetadata(metadata) {
+    if (metadata && metadata.__symbolic === 'resolved') {
+        return metadata.symbol;
+    }
+    return metadata;
+}
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoic3RhdGljX3N5bWJvbF9yZXNvbHZlci5qcyIsInNvdXJjZVJvb3QiOiIiLCJzb

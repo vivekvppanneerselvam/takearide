@@ -1,0 +1,85 @@
+urned = assign(target, foo);
+		st.equal(returned, target, 'returned object is the same reference as the target object');
+		st.deepEqual(target, { a: 1, baz: true }, 'returned object has only own properties from both');
+		st.end();
+	});
+
+	t.test('includes enumerable symbols, after keys', { skip: !hasSymbols }, function (st) {
+		var visited = [];
+		var obj = {};
+		Object.defineProperty(obj, 'a', { enumerable: true, get: function () { visited.push('a'); return 42; } });
+		var symbol = Symbol('enumerable');
+		Object.defineProperty(obj, symbol, {
+			enumerable: true,
+			get: function () { visited.push(symbol); return Infinity; }
+		});
+		var nonEnumSymbol = Symbol('non-enumerable');
+		Object.defineProperty(obj, nonEnumSymbol, {
+			enumerable: false,
+			get: function () { visited.push(nonEnumSymbol); return -Infinity; }
+		});
+		var target = assign({}, obj);
+		st.deepEqual(visited, ['a', symbol], 'key is visited first, then symbol');
+		st.equal(target.a, 42, 'target.a is 42');
+		st.equal(target[symbol], Infinity, 'target[symbol] is Infinity');
+		st.notEqual(target[nonEnumSymbol], -Infinity, 'target[nonEnumSymbol] is not -Infinity');
+		st.end();
+	});
+
+	t.test('does not fail when symbols are not present', function (st) {
+		var getSyms;
+		if (hasSymbols) {
+			getSyms = Object.getOwnPropertySymbols;
+			delete Object.getOwnPropertySymbols;
+		}
+
+		var visited = [];
+		var obj = {};
+		Object.defineProperty(obj, 'a', { enumerable: true, get: function () { visited.push('a'); return 42; } });
+		var keys = ['a'];
+		if (hasSymbols) {
+			var symbol = Symbol('sym');
+			Object.defineProperty(obj, symbol, {
+				enumerable: true,
+				get: function () { visited.push(symbol); return Infinity; }
+			});
+			keys.push(symbol);
+		}
+		var target = assign({}, obj);
+		st.deepEqual(visited, keys, 'assign visits expected keys');
+		st.equal(target.a, 42, 'target.a is 42');
+
+		if (hasSymbols) {
+			st.equal(target[symbol], Infinity);
+
+			Object.getOwnPropertySymbols = getSyms;
+		}
+		st.end();
+	});
+
+	t.test('preserves correct property enumeration order', function (st) {
+		var str = 'abcdefghijklmnopqrst';
+		var letters = {};
+		forEach(str.split(''), function (letter) {
+			letters[letter] = letter;
+		});
+
+		var n = 5;
+		st.comment('run the next test ' + n + ' times');
+		var object = assign({}, letters);
+		var actual = '';
+		for (var k in object) {
+			actual += k;
+		}
+		for (var i = 0; i < n; ++i) {
+			st.equal(actual, str, 'property enumeration order should be followed');
+		}
+		st.end();
+	});
+
+	t.test('checks enumerability and existence, in case of modification during [[Get]]', { skip: !Object.defineProperty }, function (st) {
+		var targetBvalue = {};
+		var targetCvalue = {};
+		var target = { b: targetBvalue, c: targetCvalue };
+		var source = {};
+		Object.defineProperty(source, 'a

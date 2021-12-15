@@ -1,0 +1,50 @@
+"use strict";
+/**
+ * @license
+ * Copyright 2013 Palantir Technologies, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+var tslib_1 = require("tslib");
+var utils = require("tsutils");
+var ts = require("typescript");
+var Lint = require("../index");
+var OPTION_ALWAYS = "always";
+var OPTION_NEVER = "never";
+var OPTION_IGNORE_BOUND_CLASS_METHODS = "ignore-bound-class-methods";
+var OPTION_STRICT_BOUND_CLASS_METHODS = "strict-bound-class-methods";
+var OPTION_IGNORE_INTERFACES = "ignore-interfaces";
+var Rule = /** @class */ (function (_super) {
+    tslib_1.__extends(Rule, _super);
+    function Rule() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    Rule.prototype.apply = function (sourceFile) {
+        var options = {
+            boundClassMethods: this.ruleArguments.indexOf(OPTION_STRICT_BOUND_CLASS_METHODS) !== -1
+                ? 2 /* Strict */
+                : this.ruleArguments.indexOf(OPTION_IGNORE_BOUND_CLASS_METHODS) !== -1
+                    ? 1 /* Ignore */
+                    : 0 /* Default */,
+            interfaces: this.ruleArguments.indexOf(OPTION_IGNORE_INTERFACES) === -1,
+        };
+        var Walker = this.ruleArguments.indexOf(OPTION_NEVER) === -1 ? SemicolonAlwaysWalker : SemicolonNeverWalker;
+        return this.applyWithWalker(new Walker(sourceFile, this.ruleName, options));
+    };
+    /* tslint:disable:object-literal-sort-keys */
+    Rule.metadata = {
+        ruleName: "semicolon",
+        description: "Enforces consistent semicolon usage at the end of every statement.",
+        hasFix: true,
+        optionsDescription: Lint.Utils.dedent(templateObject_1 || (templateObject_1 = tslib_1.__makeTemplateObject(["\n            One of the following arguments must be provided:\n\n            * `\"", "\"` enforces semicolons at the end of every statement.\n            * `\"", "\"` disallows semicolons at the end of every statement except for when they are necessary.\n\n            The following arguments may be optionally provided:\n\n            * `\"",

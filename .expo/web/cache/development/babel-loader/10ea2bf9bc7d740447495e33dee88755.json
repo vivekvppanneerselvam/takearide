@@ -1,0 +1,50 @@
+onnect attachment when this belongs to an interconnect of type DEDICATED.
+     */
+    export interface Schema$InterconnectAttachmentPrivateInfo {
+        /**
+         * [Output Only] 802.1q encapsulation tag to be used for traffic between Google and the customer, going to and from this network and region.
+         */
+        tag8021q?: number | null;
+    }
+    export interface Schema$InterconnectAttachmentsScopedList {
+        /**
+         * A list of interconnect attachments contained in this scope.
+         */
+        interconnectAttachments?: Schema$InterconnectAttachment[];
+        /**
+         * Informational warning which replaces the list of addresses when the list is empty.
+         */
+        warning?: {
+            code?: string;
+            data?: Array<{
+                key?: string;
+                value?: string;
+            }>;
+            message?: string;
+        } | null;
+    }
+    /**
+     * Describes a single physical circuit between the Customer and Google. CircuitInfo objects are created by Google, so all fields are output only.
+     */
+    export interface Schema$InterconnectCircuitInfo {
+        /**
+         * Customer-side demarc ID for this circuit.
+         */
+        customerDemarcId?: string | null;
+        /**
+         * Google-assigned unique ID for this circuit. Assigned at circuit turn-up.
+         */
+        googleCircuitId?: string | null;
+        /**
+         * Google-side demarc ID for this circuit. Assigned at circuit turn-up and provided by Google to the customer in the LOA.
+         */
+        googleDemarcId?: string | null;
+    }
+    /**
+     * Diagnostics information about interconnect, contains detailed and current technical information about Google's side of the connection.
+     */
+    export interface Schema$InterconnectDiagnostics {
+        /**
+         * A list of InterconnectDiagnostics.ARPEntry objects, describing individual neighbors currently seen by the Google router in the ARP cache for the Interconnect. This will be empty when the Interconnect is not bundled.
+         */
+        arpCaches?: Schema$Interconn

@@ -1,0 +1,30 @@
+Params: mergedParams, data: data };
+    };
+    BaseCreator.prototype.mergeDefaultParams = function (userParams) {
+        var baseParams = this.beans.gridOptionsWrapper.getDefaultExportParams();
+        var params = {};
+        _ag_grid_community_core__WEBPACK_IMPORTED_MODULE_0__["_"].assign(params, baseParams);
+        _ag_grid_community_core__WEBPACK_IMPORTED_MODULE_0__["_"].assign(params, userParams);
+        return params;
+    };
+    BaseCreator.prototype.packageFile = function (data) {
+        return new Blob(["\ufeff", data], {
+            type: window.navigator.msSaveOrOpenBlob ? this.getMimeType() : 'octet/stream'
+        });
+    };
+    return BaseCreator;
+}());
+
+var CsvCreator = /** @class */ (function (_super) {
+    __extends(CsvCreator, _super);
+    function CsvCreator() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    CsvCreator.prototype.postConstruct = function () {
+        this.setBeans({
+            downloader: this.downloader,
+            gridSerializer: this.gridSerializer,
+            gridOptionsWrapper: this.gridOptionsWrapper
+        });
+    };
+    CsvCreator.prototype.exportDataAs

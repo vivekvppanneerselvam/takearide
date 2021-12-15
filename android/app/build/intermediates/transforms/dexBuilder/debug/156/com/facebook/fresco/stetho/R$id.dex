@@ -1,0 +1,24 @@
+    providers: [
+                options.cookieName ? { provide: XSRF_COOKIE_NAME, useValue: options.cookieName } : [],
+                options.headerName ? { provide: XSRF_HEADER_NAME, useValue: options.headerName } : [],
+            ],
+        };
+    };
+    var HttpClientXsrfModule_1;
+    HttpClientXsrfModule = HttpClientXsrfModule_1 = tslib_1.__decorate([
+        NgModule({
+            providers: [
+                HttpXsrfInterceptor,
+                { provide: HTTP_INTERCEPTORS, useExisting: HttpXsrfInterceptor, multi: true },
+                { provide: HttpXsrfTokenExtractor, useClass: HttpXsrfCookieExtractor },
+                { provide: XSRF_COOKIE_NAME, useValue: 'XSRF-TOKEN' },
+                { provide: XSRF_HEADER_NAME, useValue: 'X-XSRF-TOKEN' },
+            ],
+        })
+    ], HttpClientXsrfModule);
+    return HttpClientXsrfModule;
+}());
+export { HttpClientXsrfModule };
+/**
+ * Configures the [dependency injector](guide/glossary#injector) for `HttpClient`
+ * with supporting services for XSRF. Automatically i

@@ -1,0 +1,154 @@
+    'resolve(' + [relativeTest[0], relativeTest[1]] + ') == ' + e +
+                 '\n  actual=' + a);
+  });
+});
+
+
+// https://github.com/joyent/node/issues/568
+[
+  undefined,
+  null,
+  true,
+  false,
+  0.0,
+  0,
+  [],
+  {}
+].forEach(function(val) {
+  test('parse(' + val + ')', function() {
+    assert.throws(function() { url.parse(val); }, TypeError);
+  });
+});
+
+
+//
+// Tests below taken from Chiron
+// http://code.google.com/p/chironjs/source/browse/trunk/src/test/http/url.js
+//
+// Copyright (c) 2002-2008 Kris Kowal <http://cixar.com/~kris.kowal>
+// used with permission under MIT License
+//
+// Changes marked with @isaacs
+
+var bases = [
+  'http://a/b/c/d;p?q',
+  'http://a/b/c/d;p?q=1/2',
+  'http://a/b/c/d;p=1/2?q',
+  'fred:///s//a/b/c',
+  'http:///s//a/b/c'
+];
+
+//[to, from, result]
+var relativeTests2 = [
+  // http://lists.w3.org/Archives/Public/uri/2004Feb/0114.html
+  ['../c', 'foo:a/b', 'foo:c'],
+  ['foo:.', 'foo:a', 'foo:'],
+  ['/foo/../../../bar', 'zz:abc', 'zz:/bar'],
+  ['/foo/../bar', 'zz:abc', 'zz:/bar'],
+  // @isaacs Disagree. Not how web browsers resolve this.
+  ['foo/../../../bar', 'zz:abc', 'zz:bar'],
+  // ['foo/../../../bar',  'zz:abc', 'zz:../../bar'], // @isaacs Added
+  ['foo/../bar', 'zz:abc', 'zz:bar'],
+  ['zz:.', 'zz:abc', 'zz:'],
+  ['/.', bases[0], 'http://a/'],
+  ['/.foo', bases[0], 'http://a/.foo'],
+  ['.foo', bases[0], 'http://a/b/c/.foo'],
+
+  // http://gbiv.com/protocols/uri/test/rel_examples1.html
+  // examples from RFC 2396
+  ['g:h', bases[0], 'g:h'],
+  ['g', bases[0], 'http://a/b/c/g'],
+  ['./g', bases[0], 'http://a/b/c/g'],
+  ['g/', bases[0], 'http://a/b/c/g/'],
+  ['/g', bases[0], 'http://a/g'],
+  ['//g', bases[0], 'http://g/'],
+  // changed with RFC 2396bis
+  //('?y', bases[0], 'http://a/b/c/d;p?y'],
+  ['?y', bases[0], 'http://a/b/c/d;p?y'],
+  ['g?y', bases[0], 'http://a/b/c/g?y'],
+  // changed with RFC 2396bis
+  //('#s', bases[0], CURRENT_DOC_URI + '#s'],
+  ['#s', bases[0], 'http://a/b/c/d;p?q#s'],
+  ['g#s', bases[0], 'http://a/b/c/g#s'],
+  ['g?y#s', bases[0], 'http://a/b/c/g?y#s'],
+  [';x', bases[0], 'http://a/b/c/;x'],
+  ['g;x', bases[0], 'http://a/b/c/g;x'],
+  ['g;x?y#s' , bases[0], 'http://a/b/c/g;x?y#s'],
+  // changed with RFC 2396bis
+  //('', bases[0], CURRENT_DOC_URI],
+  ['', bases[0], 'http://a/b/c/d;p?q'],
+  ['.', bases[0], 'http://a/b/c/'],
+  ['./', bases[0], 'http://a/b/c/'],
+  ['..', bases[0], 'http://a/b/'],
+  ['../', bases[0], 'http://a/b/'],
+  ['../g', bases[0], 'http://a/b/g'],
+  ['../..', bases[0], 'http://a/'],
+  ['../../', bases[0], 'http://a/'],
+  ['../../g' , bases[0], 'http://a/g'],
+  ['../../../g', bases[0], ('http://a/../g', 'http://a/g')],
+  ['../../../../g', bases[0], ('http://a/../../g', 'http://a/g')],
+  // changed with RFC 2396bis
+  //('/./g', bases[0], 'http://a/./g'],
+  ['/./g', bases[0], 'http://a/g'],
+  // changed with RFC 2396bis
+  //('/../g', bases[0], 'http://a/../g'],
+  ['/../g', bases[0], 'http://a/g'],
+  ['g.', bases[0], 'http://a/b/c/g.'],
+  ['.g', bases[0], 'http://a/b/c/.g'],
+  ['g..', bases[0], 'http://a/b/c/g..'],
+  ['..g', bases[0], 'http://a/b/c/..g'],
+  ['./../g', bases[0], 'http://a/b/g'],
+  ['./g/.', bases[0], 'http://a/b/c/g/'],
+  ['g/./h', bases[0], 'http://a/b/c/g/h'],
+  ['g/../h', bases[0], 'http://a/b/c/h'],
+  ['g;x=1/./y', bases[0], 'http://a/b/c/g;x=1/y'],
+  ['g;x=1/../y', bases[0], 'http://a/b/c/y'],
+  ['g?y/./x', bases[0], 'http://a/b/c/g?y/./x'],
+  ['g?y/../x', bases[0], 'http://a/b/c/g?y/../x'],
+  ['g#s/./x', bases[0], 'http://a/b/c/g#s/./x'],
+  ['g#s/../x', bases[0], 'http://a/b/c/g#s/../x'],
+  ['http:g', bases[0], ('http:g', 'http://a/b/c/g')],
+  ['http:', bases[0], ('http:', bases[0])],
+  // not sure where this one originated
+  ['/a/b/c/./../../g', bases[0], 'http://a/a/g'],
+
+  // http://gbiv.com/protocols/uri/test/rel_examples2.html
+  // slashes in base URI's query args
+  ['g', bases[1], 'http://a/b/c/g'],
+  ['./g', bases[1], 'http://a/b/c/g'],
+  ['g/', bases[1], 'http://a/b/c/g/'],
+  ['/g', bases[1], 'http://a/g'],
+  ['//g', bases[1], 'http://g/'],
+  // changed in RFC 2396bis
+  //('?y', bases[1], 'http://a/b/c/?y'],
+  ['?y', bases[1], 'http://a/b/c/d;p?y'],
+  ['g?y', bases[1], 'http://a/b/c/g?y'],
+  ['g?y/./x' , bases[1], 'http://a/b/c/g?y/./x'],
+  ['g?y/../x', bases[1], 'http://a/b/c/g?y/../x'],
+  ['g#s', bases[1], 'http://a/b/c/g#s'],
+  ['g#s/./x' , bases[1], 'http://a/b/c/g#s/./x'],
+  ['g#s/../x', bases[1], 'http://a/b/c/g#s/../x'],
+  ['./', bases[1], 'http://a/b/c/'],
+  ['../', bases[1], 'http://a/b/'],
+  ['../g', bases[1], 'http://a/b/g'],
+  ['../../', bases[1], 'http://a/'],
+  ['../../g' , bases[1], 'http://a/g'],
+
+  // http://gbiv.com/protocols/uri/test/rel_examples3.html
+  // slashes in path params
+  // all of these changed in RFC 2396bis
+  ['g', bases[2], 'http://a/b/c/d;p=1/g'],
+  ['./g', bases[2], 'http://a/b/c/d;p=1/g'],
+  ['g/', bases[2], 'http://a/b/c/d;p=1/g/'],
+  ['g?y', bases[2], 'http://a/b/c/d;p=1/g?y'],
+  [';x', bases[2], 'http://a/b/c/d;p=1/;x'],
+  ['g;x', bases[2], 'http://a/b/c/d;p=1/g;x'],
+  ['g;x=1/./y', bases[2], 'http://a/b/c/d;p=1/g;x=1/y'],
+  ['g;x=1/../y', bases[2], 'http://a/b/c/d;p=1/y'],
+  ['./', bases[2], 'http://a/b/c/d;p=1/'],
+  ['../', bases[2], 'http://a/b/c/'],
+  ['../g', bases[2], 'http://a/b/c/g'],
+  ['../../', bases[2], 'http://a/b/'],
+  ['../../g' , bases[2], 'http://a/b/g'],
+
+  // http://gbiv.com/protoco

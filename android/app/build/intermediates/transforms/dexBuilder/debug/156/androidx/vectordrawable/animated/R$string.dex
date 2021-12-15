@@ -1,0 +1,20 @@
+  /**
+     * Marks the control as `untouched`.
+     *
+     * If the control has any children, also marks all children as `untouched`
+     * and recalculates the `touched` status of all parent controls.
+     *
+     *  @param opts Configuration options that determine how the control propagates changes
+     * and emits events after the marking is applied.
+     * * `onlySelf`: When true, mark only this control. When false or not supplied,
+     * marks all direct ancestors. Default is false.
+     */
+    markAsUntouched(opts?: {
+        onlySelf?: boolean;
+    }): void;
+    /**
+     * Marks the control as `dirty`. A control becomes dirty when
+     * the control's is changed through the UI; compare `markAsTouched`.
+     *
+     *  @param opts Configuration options that determine how the control propagates changes
+     * 

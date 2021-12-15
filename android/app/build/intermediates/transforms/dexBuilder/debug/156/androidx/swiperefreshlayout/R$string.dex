@@ -1,0 +1,33 @@
+ne, errors-only, minimal, normal, detailed, verbose
+		// Any other falsy value will behave as 'none', truthy values as 'normal'
+		const pn =
+			(typeof name === "string" && name.toLowerCase()) || name || "none";
+		switch (pn) {
+			case "none":
+				return {
+					all: false
+				};
+			case "verbose":
+				return {
+					entrypoints: true,
+					chunkGroups: true,
+					modules: false,
+					chunks: true,
+					chunkModules: true,
+					chunkOrigins: true,
+					depth: true,
+					env: true,
+					reasons: true,
+					usedExports: true,
+					providedExports: true,
+					optimizationBailout: true,
+					errorDetails: true,
+					publicPath: true,
+					exclude: false,
+					maxModules: Infinity
+				};
+			case "detailed":
+				return {
+					entrypoints: true,
+					chunkGroups: true,
+					chun

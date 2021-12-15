@@ -1,0 +1,81 @@
+     }
+        }
+    };
+    SemicolonWalker.prototype.checkEmptyStatement = function (node) {
+        // An empty statement is only ever useful when it is the only statement inside a loop
+        if (!utils.isIterationStatement(node.parent)) {
+            var parentKind = node.parent.kind;
+            // don't remove empty statement if it is a direct child of if, with or a LabeledStatement
+            // otherwise this would unintentionally change control flow
+            var noFix = parentKind === ts.SyntaxKind.IfStatement ||
+                parentKind === ts.SyntaxKind.LabeledStatement ||
+                parentKind === ts.SyntaxKind.WithStatement;
+            this.reportUnnecessary(node.end, noFix);
+        }
+    };
+    SemicolonWalker.prototype.visitPropertyDeclaration = function (node) {
+        // check if this is a multi-line arrow function
+        if (this.options.boundClassMethods !== 2 /* Strict */ &&
+            node.initializer !== undefined &&
+            node.initializer.kind === ts.SyntaxKind.ArrowFunction &&
+            !utils.isSameLine(this.sourceFile, node.getStart(this.sourceFile), node.end)) {
+            if (this.options.boundClassMethods === 0 /* Default */) {
+                this.checkUnnecessary(node);
+            }
+        }
+        else {
+            this.checkPropertyDeclaration(node);
+        }
+    };
+    return SemicolonWalker;
+}(Lint.AbstractWalker));
+var SemicolonAlwaysWalker = /** @class */ (function (_super) {
+    tslib_1.__extends(SemicolonAlwaysWalker, _super);
+    function SemicolonAlwaysWalker() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    SemicolonAlwaysWalker.prototype.visitNode = function (node) {
+        switch (node.kind) {
+            case ts.SyntaxKind.VariableStatement:
+            case ts.SyntaxKind.ExpressionStatement:
+            case ts.SyntaxKind.ReturnStatement:
+            case ts.SyntaxKind.BreakStatement:
+            case ts.SyntaxKind.ContinueStatement:
+            case ts.SyntaxKind.ThrowStatement:
+            case ts.SyntaxKind.ImportEqualsDeclaration:
+            case ts.SyntaxKind.DoStatement:
+            case ts.SyntaxKind.ExportAssignment:
+            case ts.SyntaxKind.TypeAliasDeclaration:
+            case ts.SyntaxKind.ImportDeclaration:
+            case ts.SyntaxKind.ExportDeclaration:
+            case ts.SyntaxKind.DebuggerStatement:
+                return this.checkMissing(node);
+            case ts.SyntaxKind.ModuleDeclaration:
+            case ts.SyntaxKind.MethodDeclaration:
+            case ts.SyntaxKind.FunctionDeclaration:
+                // check shorthand module declarations and method / function signatures
+                if (node.body === undefined) {
+                    this.checkMissing(node);
+                }
+                break;
+            case ts.SyntaxKind.InterfaceDeclaration:
+                if (this.options.interfaces) {
+                    this.checkInterface(node);
+                }
+                break;
+            default:
+                return _super.prototype.visitNode.call(this, node);
+        }
+    };
+    SemicolonAlwaysWalker.prototype.checkPropertyDeclaration = function (node) {
+        return this.checkMissing(node);
+    };
+    SemicolonAlwaysWalker.prototype.checkMissing = function (node) {
+        if (this.sourceFile.text[node.end - 1] !== ";") {
+            this.reportMissing(node.end);
+        }
+    };
+    SemicolonAlwaysWalker.prototype.reportMissing = function (pos) {
+        this.addFailureAt(pos, 0, Rule.FAILURE_STRING_MISSING, Lint.Replacement.appendText(pos, ";"));
+    };
+    SemicolonAlwaysW

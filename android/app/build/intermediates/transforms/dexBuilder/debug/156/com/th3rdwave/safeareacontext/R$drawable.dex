@@ -1,0 +1,220 @@
+imationCallbacksBuffer.forEach(tuple => {
+                        const [fn, data] = tuple;
+                        fn(data);
+                    });
+                    this._animationCallbacksBuffer = [];
+                });
+            });
+        }
+        this._animationCallbacksBuffer.push([fn, data]);
+    }
+    /**
+     * @return {?}
+     */
+    end() {
+        this._cdRecurDepth--;
+        // this is to prevent animations from running twice when an inner
+        // component does CD when a parent component insted has inserted it
+        if (this._cdRecurDepth == 0) {
+            this._zone.runOutsideAngular(() => {
+                this._scheduleCountTask();
+                this.engine.flush(this._microtaskId);
+            });
+        }
+        if (this.delegate.end) {
+            this.delegate.end();
+        }
+    }
+    /**
+     * @return {?}
+     */
+    whenRenderingDone() { return this.engine.whenRenderingDone(); }
+}
+AnimationRendererFactory.decorators = [
+    { type: Injectable }
+];
+/** @nocollapse */
+AnimationRendererFactory.ctorParameters = () => [
+    { type: RendererFactory2 },
+    { type: ɵAnimationEngine },
+    { type: NgZone }
+];
+class BaseAnimationRenderer {
+    /**
+     * @param {?} namespaceId
+     * @param {?} delegate
+     * @param {?} engine
+     */
+    constructor(namespaceId, delegate, engine) {
+        this.namespaceId = namespaceId;
+        this.delegate = delegate;
+        this.engine = engine;
+        this.destroyNode = this.delegate.destroyNode ? (n) => /** @type {?} */ ((delegate.destroyNode))(n) : null;
+    }
+    /**
+     * @return {?}
+     */
+    get data() { return this.delegate.data; }
+    /**
+     * @return {?}
+     */
+    destroy() {
+        this.engine.destroy(this.namespaceId, this.delegate);
+        this.delegate.destroy();
+    }
+    /**
+     * @param {?} name
+     * @param {?=} namespace
+     * @return {?}
+     */
+    createElement(name, namespace) {
+        return this.delegate.createElement(name, namespace);
+    }
+    /**
+     * @param {?} value
+     * @return {?}
+     */
+    createComment(value) { return this.delegate.createComment(value); }
+    /**
+     * @param {?} value
+     * @return {?}
+     */
+    createText(value) { return this.delegate.createText(value); }
+    /**
+     * @param {?} parent
+     * @param {?} newChild
+     * @return {?}
+     */
+    appendChild(parent, newChild) {
+        this.delegate.appendChild(parent, newChild);
+        this.engine.onInsert(this.namespaceId, newChild, parent, false);
+    }
+    /**
+     * @param {?} parent
+     * @param {?} newChild
+     * @param {?} refChild
+     * @return {?}
+     */
+    insertBefore(parent, newChild, refChild) {
+        this.delegate.insertBefore(parent, newChild, refChild);
+        this.engine.onInsert(this.namespaceId, newChild, parent, true);
+    }
+    /**
+     * @param {?} parent
+     * @param {?} oldChild
+     * @return {?}
+     */
+    removeChild(parent, oldChild) {
+        this.engine.onRemove(this.namespaceId, oldChild, this.delegate);
+    }
+    /**
+     * @param {?} selectorOrNode
+     * @return {?}
+     */
+    selectRootElement(selectorOrNode) { return this.delegate.selectRootElement(selectorOrNode); }
+    /**
+     * @param {?} node
+     * @return {?}
+     */
+    parentNode(node) { return this.delegate.parentNode(node); }
+    /**
+     * @param {?} node
+     * @return {?}
+     */
+    nextSibling(node) { return this.delegate.nextSibling(node); }
+    /**
+     * @param {?} el
+     * @param {?} name
+     * @param {?} value
+     * @param {?=} namespace
+     * @return {?}
+     */
+    setAttribute(el, name, value, namespace) {
+        this.delegate.setAttribute(el, name, value, namespace);
+    }
+    /**
+     * @param {?} el
+     * @param {?} name
+     * @param {?=} namespace
+     * @return {?}
+     */
+    removeAttribute(el, name, namespace) {
+        this.delegate.removeAttribute(el, name, namespace);
+    }
+    /**
+     * @param {?} el
+     * @param {?} name
+     * @return {?}
+     */
+    addClass(el, name) { this.delegate.addClass(el, name); }
+    /**
+     * @param {?} el
+     * @param {?} name
+     * @return {?}
+     */
+    removeClass(el, name) { this.delegate.removeClass(el, name); }
+    /**
+     * @param {?} el
+     * @param {?} style
+     * @param {?} value
+     * @param {?=} flags
+     * @return {?}
+     */
+    setStyle(el, style, value, flags) {
+        this.delegate.setStyle(el, style, value, flags);
+    }
+    /**
+     * @param {?} el
+     * @param {?} style
+     * @param {?=} flags
+     * @return {?}
+     */
+    removeStyle(el, style, flags) {
+        this.delegate.removeStyle(el, style, flags);
+    }
+    /**
+     * @param {?} el
+     * @param {?} name
+     * @param {?} value
+     * @return {?}
+     */
+    setProperty(el, name, value) {
+        if (name.charAt(0) == ANIMATION_PREFIX && name == DISABLE_ANIMATIONS_FLAG) {
+            this.disableAnimations(el, !!value);
+        }
+        else {
+            this.delegate.setProperty(el, name, value);
+        }
+    }
+    /**
+     * @param {?} node
+     * @param {?} value
+     * @return {?}
+     */
+    setValue(node, value) { this.delegate.setValue(node, value); }
+    /**
+     * @param {?} target
+     * @param {?} eventName
+     * @param {?} callback
+     * @return {?}
+     */
+    listen(target, eventName, callback) {
+        return this.delegate.listen(target, eventName, callback);
+    }
+    /**
+     * @param {?} element
+     * @param {?} value
+     * @return {?}
+     */
+    disableAnimations(element, value) {
+        this.engine.disableAnimations(element, value);
+    }
+}
+class AnimationRenderer extends BaseAnimationRenderer {
+    /**
+     * @param {?} factory
+     * @param {?} namespaceId
+     * @param {?} delegate
+     * @param {?} engine
+     */
+    constructor(

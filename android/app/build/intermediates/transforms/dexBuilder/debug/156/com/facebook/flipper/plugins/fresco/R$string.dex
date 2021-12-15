@@ -1,0 +1,56 @@
+N_IGNORE_INTERFACES],
+                },
+            ],
+            additionalItems: false,
+        },
+        optionExamples: [
+            [true, OPTION_ALWAYS],
+            [true, OPTION_NEVER],
+            [true, OPTION_ALWAYS, OPTION_IGNORE_INTERFACES],
+            [true, OPTION_ALWAYS, OPTION_IGNORE_BOUND_CLASS_METHODS],
+        ],
+        type: "style",
+        typescriptOnly: false,
+    };
+    /* tslint:enable:object-literal-sort-keys */
+    Rule.FAILURE_STRING_MISSING = "Missing semicolon";
+    Rule.FAILURE_STRING_COMMA = "Properties should be separated by semicolons";
+    Rule.FAILURE_STRING_UNNECESSARY = "Unnecessary semicolon";
+    return Rule;
+}(Lint.Rules.AbstractRule));
+exports.Rule = Rule;
+var SemicolonWalker = /** @class */ (function (_super) {
+    tslib_1.__extends(SemicolonWalker, _super);
+    function SemicolonWalker() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    SemicolonWalker.prototype.walk = function (sourceFile) {
+        var _this = this;
+        var cb = function (node) {
+            _this.visitNode(node);
+            return ts.forEachChild(node, cb);
+        };
+        return ts.forEachChild(sourceFile, cb);
+    };
+    SemicolonWalker.prototype.visitNode = function (node) {
+        switch (node.kind) {
+            case ts.SyntaxKind.SemicolonClassElement:
+                return this.reportUnnecessary(node.end);
+            case ts.SyntaxKind.EmptyStatement:
+                return this.checkEmptyStatement(node);
+            case ts.SyntaxKind.PropertyDeclaration:
+                return this.visitPropertyDeclaration(node);
+        }
+    };
+    SemicolonWalker.prototype.reportUnnecessary = function (pos, noFix) {
+        this.addFailure(pos - 1, pos, Rule.FAILURE_STRING_UNNECESSARY, noFix ? undefined : Lint.Replacement.deleteText(pos - 1, 1));
+    };
+    SemicolonWalker.prototype.checkSemicolonOrLineBreak = function (node) {
+        if (this.sourceFile.text[node.end - 1] !== ";") {
+            return;
+        }
+        var nextToken = utils.getNextToken(node, this.sourceFile);
+        switch (nextToken.kind) {
+            case ts.SyntaxKind.EndOfFileToken:
+            case ts.SyntaxKind.CloseBraceToken:
+                return

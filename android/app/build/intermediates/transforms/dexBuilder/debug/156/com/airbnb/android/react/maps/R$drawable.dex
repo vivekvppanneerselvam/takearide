@@ -1,0 +1,280 @@
+h': '[fe80::1]'
+  },
+
+  'coap://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]': {
+    'protocol': 'coap:',
+    'slashes': true,
+    'host': '[fedc:ba98:7654:3210:fedc:ba98:7654:3210]',
+    'hostname': 'fedc:ba98:7654:3210:fedc:ba98:7654:3210',
+    'href': 'coap://[fedc:ba98:7654:3210:fedc:ba98:7654:3210]/',
+    'pathname': '/',
+    'path': '/'
+  },
+
+  'coap://[1080:0:0:0:8:800:200C:417A]:61616/': {
+    'protocol': 'coap:',
+    'slashes': true,
+    'host': '[1080:0:0:0:8:800:200c:417a]:61616',
+    'port': '61616',
+    'hostname': '1080:0:0:0:8:800:200c:417a',
+    'href': 'coap://[1080:0:0:0:8:800:200c:417a]:61616/',
+    'pathname': '/',
+    'path': '/'
+  },
+
+  'http://user:password@[3ffe:2a00:100:7031::1]:8080': {
+    'protocol': 'http:',
+    'slashes': true,
+    'auth': 'user:password',
+    'host': '[3ffe:2a00:100:7031::1]:8080',
+    'port': '8080',
+    'hostname': '3ffe:2a00:100:7031::1',
+    'href': 'http://user:password@[3ffe:2a00:100:7031::1]:8080/',
+    'pathname': '/',
+    'path': '/'
+  },
+
+  'coap://u:p@[::192.9.5.5]:61616/.well-known/r?n=Temperature': {
+    'protocol': 'coap:',
+    'slashes': true,
+    'auth': 'u:p',
+    'host': '[::192.9.5.5]:61616',
+    'port': '61616',
+    'hostname': '::192.9.5.5',
+    'href': 'coap://u:p@[::192.9.5.5]:61616/.well-known/r?n=Temperature',
+    'search': '?n=Temperature',
+    'query': 'n=Temperature',
+    'pathname': '/.well-known/r',
+    'path': '/.well-known/r?n=Temperature'
+  },
+
+  // empty port
+  'http://example.com:': {
+    'protocol': 'http:',
+    'slashes': true,
+    'host': 'example.com',
+    'hostname': 'example.com',
+    'href': 'http://example.com/',
+    'pathname': '/',
+    'path': '/'
+  },
+
+  'http://example.com:/a/b.html': {
+    'protocol': 'http:',
+    'slashes': true,
+    'host': 'example.com',
+    'hostname': 'example.com',
+    'href': 'http://example.com/a/b.html',
+    'pathname': '/a/b.html',
+    'path': '/a/b.html'
+  },
+
+  'http://example.com:?a=b': {
+    'protocol': 'http:',
+    'slashes': true,
+    'host': 'example.com',
+    'hostname': 'example.com',
+    'href': 'http://example.com/?a=b',
+    'search': '?a=b',
+    'query': 'a=b',
+    'pathname': '/',
+    'path': '/?a=b'
+  },
+
+  'http://example.com:#abc': {
+    'protocol': 'http:',
+    'slashes': true,
+    'host': 'example.com',
+    'hostname': 'example.com',
+    'href': 'http://example.com/#abc',
+    'hash': '#abc',
+    'pathname': '/',
+    'path': '/'
+  },
+
+  'http://[fe80::1]:/a/b?a=b#abc': {
+    'protocol': 'http:',
+    'slashes': true,
+    'host': '[fe80::1]',
+    'hostname': 'fe80::1',
+    'href': 'http://[fe80::1]/a/b?a=b#abc',
+    'search': '?a=b',
+    'query': 'a=b',
+    'hash': '#abc',
+    'pathname': '/a/b',
+    'path': '/a/b?a=b'
+  },
+
+  'http://-lovemonsterz.tumblr.com/rss': {
+    'protocol': 'http:',
+    'slashes': true,
+    'host': '-lovemonsterz.tumblr.com',
+    'hostname': '-lovemonsterz.tumblr.com',
+    'href': 'http://-lovemonsterz.tumblr.com/rss',
+    'pathname': '/rss',
+    'path': '/rss',
+  },
+
+  'http://-lovemonsterz.tumblr.com:80/rss': {
+    'protocol': 'http:',
+    'slashes': true,
+    'port': '80',
+    'host': '-lovemonsterz.tumblr.com:80',
+    'hostname': '-lovemonsterz.tumblr.com',
+    'href': 'http://-lovemonsterz.tumblr.com:80/rss',
+    'pathname': '/rss',
+    'path': '/rss',
+  },
+
+  'http://user:pass@-lovemonsterz.tumblr.com/rss': {
+    'protocol': 'http:',
+    'slashes': true,
+    'auth': 'user:pass',
+    'host': '-lovemonsterz.tumblr.com',
+    'hostname': '-lovemonsterz.tumblr.com',
+    'href': 'http://user:pass@-lovemonsterz.tumblr.com/rss',
+    'pathname': '/rss',
+    'path': '/rss',
+  },
+
+  'http://user:pass@-lovemonsterz.tumblr.com:80/rss': {
+    'protocol': 'http:',
+    'slashes': true,
+    'auth': 'user:pass',
+    'port': '80',
+    'host': '-lovemonsterz.tumblr.com:80',
+    'hostname': '-lovemonsterz.tumblr.com',
+    'href': 'http://user:pass@-lovemonsterz.tumblr.com:80/rss',
+    'pathname': '/rss',
+    'path': '/rss',
+  },
+
+  'http://_jabber._tcp.google.com/test': {
+    'protocol': 'http:',
+    'slashes': true,
+    'host': '_jabber._tcp.google.com',
+    'hostname': '_jabber._tcp.google.com',
+    'href': 'http://_jabber._tcp.google.com/test',
+    'pathname': '/test',
+    'path': '/test',
+  },
+
+  'http://user:pass@_jabber._tcp.google.com/test': {
+    'protocol': 'http:',
+    'slashes': true,
+    'auth': 'user:pass',
+    'host': '_jabber._tcp.google.com',
+    'hostname': '_jabber._tcp.google.com',
+    'href': 'http://user:pass@_jabber._tcp.google.com/test',
+    'pathname': '/test',
+    'path': '/test',
+  },
+
+  'http://_jabber._tcp.google.com:80/test': {
+    'protocol': 'http:',
+    'slashes': true,
+    'port': '80',
+    'host': '_jabber._tcp.google.com:80',
+    'hostname': '_jabber._tcp.google.com',
+    'href': 'http://_jabber._tcp.google.com:80/test',
+    'pathname': '/test',
+    'path': '/test',
+  },
+
+  'http://user:pass@_jabber._tcp.google.com:80/test': {
+    'protocol': 'http:',
+    'slashes': true,
+    'auth': 'user:pass',
+    'port': '80',
+    'host': '_jabber._tcp.google.com:80',
+    'hostname': '_jabber._tcp.google.com',
+    'href': 'http://user:pass@_jabber._tcp.google.com:80/test',
+    'pathname': '/test',
+    'path': '/test',
+  },
+
+  'http://x:1/\' <>"`/{}|\\^~`/': {
+    protocol: 'http:',
+    slashes: true,
+    host: 'x:1',
+    port: '1',
+    hostname: 'x',
+    pathname: '/%27%20%3C%3E%22%60/%7B%7D%7C/%5E~%60/',
+    path: '/%27%20%3C%3E%22%60/%7B%7D%7C/%5E~%60/',
+    href: 'http://x:1/%27%20%3C%3E%22%60/%7B%7D%7C/%5E~%60/'
+  },
+
+  'http://a@b@c/': {
+    protocol: 'http:',
+    slashes: true,
+    auth: 'a@b',
+    host: 'c',
+    hostname: 'c',
+    href: 'http://a%40b@c/',
+    path: '/',
+    pathname: '/'
+  },
+
+  'http://a@b?@c': {
+    protocol: 'http:',
+    slashes: true,
+    auth: 'a',
+    host: 'b',
+    hostname: 'b',
+    href: 'http://a@b/?@c',
+    path: '/?@c',
+    pathname: '/',
+    search: '?@c',
+    query: '@c'
+  },
+
+  'http://a\r" \t\n<\'b:b@c\r\nd/e?f':{
+    protocol: 'http:',
+    slashes: true,
+    auth: 'a\r" \t\n<\'b:b',
+    host: 'c',
+    port: null,
+    hostname: 'c',
+    hash: null,
+    search: '?f',
+    query: 'f',
+    pathname: '%0D%0Ad/e',
+    path: '%0D%0Ad/e?f',
+    href: 'http://a%0D%22%20%09%0A%3C\'b:b@c/%0D%0Ad/e?f'
+  },
+
+  // git urls used by npm
+  'git+ssh://git@github.com:npm/npm': {
+    protocol: 'git+ssh:',
+    slashes: true,
+    auth: 'git',
+    host: 'github.com',
+    port: null,
+    hostname: 'github.com',
+    hash: null,
+    search: null,
+    query: null,
+    pathname: '/:npm/npm',
+    path: '/:npm/npm',
+    href: 'git+ssh://git@github.com/:npm/npm'
+  }
+
+};
+
+Object.keys(parseTests).forEach(function(u) {
+  test('parse(' + u + ')', function() {
+    var actual = url.parse(u),
+        spaced = url.parse('     \t  ' + u + '\n\t');
+        expected = parseTests[u];
+
+    Object.keys(actual).forEach(function (i) {
+      if (expected[i] === undefined && actual[i] === null) {
+        expected[i] = null;
+      }
+    });
+
+    assert.deepEqual(actual, expected);
+    assert.deepEqual(spaced, expected);
+
+    var expected = parseTests[u].href,
+        actual = url.format(parseTests[u

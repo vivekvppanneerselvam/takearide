@@ -1,0 +1,36 @@
+ path: '/example?query=value',
+    href: '/example?query=value'
+  }
+};
+
+Object.keys(parseTestsWithQueryString).forEach(function(u) {
+  test('parse(' + u + ')', function() {
+    var actual = url.parse(u, true);
+    var expected = parseTestsWithQueryString[u];
+    for (var i in actual) {
+      if (actual[i] === null && expected[i] === undefined) {
+        expected[i] = null;
+      }
+    }
+
+    assert.deepEqual(actual, expected);
+  });
+});
+
+// some extra formatting tests, just to verify
+// that it'll format slightly wonky content to a valid url.
+var formatTests = {
+  'http://example.com?' : {
+    'href': 'http://example.com/?',
+    'protocol': 'http:',
+    'slashes': true,
+    'host': 'example.com',
+    'hostname': 'example.com',
+    'search': '?',
+    'query': {},
+    'pathname': '/'
+  },
+  'http://example.com?foo=bar#frag' : {
+    'href': 'http://example.com/?foo=bar#frag',
+    'protocol': 'http:',
+    'host': 'example.

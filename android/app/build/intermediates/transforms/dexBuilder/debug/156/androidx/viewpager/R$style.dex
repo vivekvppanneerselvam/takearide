@@ -1,0 +1,57 @@
+/path?search=foo'
+  },
+
+  'svn+ssh://foo/bar': {
+    'href': 'svn+ssh://foo/bar',
+    'host': 'foo',
+    'hostname': 'foo',
+    'protocol': 'svn+ssh:',
+    'pathname': '/bar',
+    'path': '/bar',
+    'slashes': true
+  },
+
+  'dash-test://foo/bar': {
+    'href': 'dash-test://foo/bar',
+    'host': 'foo',
+    'hostname': 'foo',
+    'protocol': 'dash-test:',
+    'pathname': '/bar',
+    'path': '/bar',
+    'slashes': true
+  },
+
+  'dash-test:foo/bar': {
+    'href': 'dash-test:foo/bar',
+    'host': 'foo',
+    'hostname': 'foo',
+    'protocol': 'dash-test:',
+    'pathname': '/bar',
+    'path': '/bar'
+  },
+
+  'dot.test://foo/bar': {
+    'href': 'dot.test://foo/bar',
+    'host': 'foo',
+    'hostname': 'foo',
+    'protocol': 'dot.test:',
+    'pathname': '/bar',
+    'path': '/bar',
+    'slashes': true
+  },
+
+  'dot.test:foo/bar': {
+    'href': 'dot.test:foo/bar',
+    'host': 'foo',
+    'hostname': 'foo',
+    'protocol': 'dot.test:',
+    'pathname': '/bar',
+    'path': '/bar'
+  },
+
+  // IDNA tests
+  'http://www.日本語.com/' : {
+    'href': 'http://www.xn--wgv71a119e.com/',
+    'protocol': 'http:',
+    'slashes': true,
+    'host': 'www.xn--wgv71a1

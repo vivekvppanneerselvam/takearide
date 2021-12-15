@@ -1,0 +1,33 @@
+   * @see [Reporters](../#reporters)
+	   * @param {String|Function} reporterName - Reporter name or constructor.
+	   * @param {Object} [reporterOptions] - Options used to configure the reporter.
+	   * @returns {Mocha} this
+	   * @chainable
+	   * @throws {Error} if requested reporter cannot be loaded
+	   * @example
+	   *
+	   * // Use XUnit reporter and direct its output to file
+	   * mocha.reporter('xunit', { output: '/path/to/testspec.xunit.xml' });
+	   */
+
+
+	  Mocha.prototype.reporter = function (reporterName, reporterOptions) {
+	    if (typeof reporterName === 'function') {
+	      this._reporter = reporterName;
+	    } else {
+	      reporterName = reporterName || 'spec';
+	      var reporter; // Try to load a built-in reporter.
+
+	      if (reporters[reporterName]) {
+	        reporter = reporters[reporterName];
+	      } // Try to load reporters from process.cwd() and node_modules
+
+
+	      if (!reporter) {
+	        try {
+	          reporter = commonjsRequire(reporterName);
+	        } catch (err) {
+	          if (err.code === 'MODULE_NOT_FOUND' || err.message.indexOf('Cannot find module') >= 0) {
+	            // Try to load reporters from a path (absolute or relative)
+	            try {
+	              reporter = commonjsRequire(path$1.resolve(util

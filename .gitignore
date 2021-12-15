@@ -1,0 +1,9 @@
+/server/node_modules
+/server/package-lock.json
+/server/envConfig
+/server/jwt-config
+/server/default
+
+/server/.env
+.env
+
